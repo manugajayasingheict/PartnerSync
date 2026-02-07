@@ -1,14 +1,43 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+
+// Import ALL your pages
 import Home from './pages/Home';
-import Projects from './pages/Projects'; // Import the new page
+import Projects from './pages/Projects';
+import Login from './pages/Login';
+import Signup from './pages/Signup';
+import AdminDashboard from './pages/AdminDashboard';
+
+// 🛡️ Protected Route Component
+const AdminRoute = ({ children }) => {
+  const user = JSON.parse(localStorage.getItem('user'));
+  
+  if (!user || user.role !== 'admin') {
+    return <Navigate to="/" />;
+  }
+  
+  return children;
+};
 
 function App() {
   return (
     <Router>
       <Routes>
+        {/* Public Routes */}
         <Route path="/" element={<Home />} />
-        <Route path="/projects" element={<Projects />} /> {/* Use the component here */}
+        <Route path="/projects" element={<Projects />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/signup" element={<Signup />} />
+
+        {/* 🔐 Admin Route */}
+        <Route 
+          path="/admin" 
+          element={
+            <AdminRoute>
+              <AdminDashboard />
+            </AdminRoute>
+          } 
+        />
       </Routes>
     </Router>
   );

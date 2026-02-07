@@ -107,3 +107,42 @@ exports.approveUser = async (req, res) => {
     res.status(400).json({ success: false, error: err.message });
   }
 };
+
+// --- NEW CODES ADDED FOR ADMIN DASHBOARD ---
+
+// @desc    Get all users
+// @route   GET /api/auth/users
+exports.getUsers = async (req, res) => {
+  try {
+    // Finds all users and excludes the password field for security
+    const users = await User.find().select('-password');
+    res.status(200).json({ 
+      success: true, 
+      count: users.length, 
+      data: users 
+    });
+  } catch (err) {
+    res.status(400).json({ success: false, error: err.message });
+  }
+};
+
+// @desc    Delete user
+// @route   DELETE /api/auth/users/:id
+exports.deleteUser = async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id);
+    
+    if (!user) {
+      return res.status(404).json({ success: false, error: 'User not found' });
+    }
+    
+    await user.deleteOne();
+    
+    res.status(200).json({ 
+      success: true, 
+      message: 'User removed from system' 
+    });
+  } catch (err) {
+    res.status(400).json({ success: false, error: err.message });
+  }
+};

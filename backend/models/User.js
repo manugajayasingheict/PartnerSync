@@ -9,7 +9,7 @@ const userSchema = new mongoose.Schema({
   // 1. The Role they WANT
   requestedRole: {
     type: String,
-    enum: ['partner', 'government', 'admin'],
+    enum: ['partner', 'government', 'admin', 'public'],
     default: 'partner'
   },
 

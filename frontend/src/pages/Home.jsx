@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
-import { FaGlobeAsia, FaHandshake, FaCheckCircle, FaSpinner } from 'react-icons/fa';
+import { Link, useNavigate } from 'react-router-dom';
+import { FaGlobeAsia, FaHandshake, FaCheckCircle, FaSpinner, FaUserCircle, FaSignOutAlt, FaUserShield } from 'react-icons/fa';
 
 const Home = () => {
   const [stats, setStats] = useState({
@@ -9,8 +9,18 @@ const Home = () => {
     completed: 0
   });
   const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState(null);
+  const navigate = useNavigate();
 
-  // Fetch real data from your API to calculate stats
+  // 1. Check if user is logged in on mount
+  useEffect(() => {
+    const savedUser = localStorage.getItem('user');
+    if (savedUser) {
+      setUser(JSON.parse(savedUser));
+    }
+  }, []);
+
+  // 2. Fetch real data from your API to calculate stats
   useEffect(() => {
     const fetchStats = async () => {
       try {
@@ -35,6 +45,14 @@ const Home = () => {
     fetchStats();
   }, []);
 
+  // 3. Logout Function
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    setUser(null);
+    navigate('/');
+  };
+
   return (
     <div className="min-h-screen flex flex-col font-sans bg-neutral">
       
@@ -45,11 +63,42 @@ const Home = () => {
             <FaGlobeAsia className="text-3xl text-accent" />
             <span className="text-2xl font-bold tracking-wide">PartnerSync</span>
           </div>
-          <div className="space-x-8 font-medium">
+          
+          <div className="flex items-center space-x-6 font-medium">
             <Link to="/" className="hover:text-accent transition">Home</Link>
-            <Link to="/projects" className="bg-secondary px-6 py-2 rounded-full font-bold shadow-md hover:bg-blue-600 transition">
-              Manage Projects
-            </Link>
+            <Link to="/projects" className="hover:text-accent transition">Projects</Link>
+
+            {/* NEW: Admin Dashboard link - Only visible if user role is admin */}
+            {user?.role === 'admin' && (
+              <Link to="/admin" className="text-accent flex items-center gap-1 hover:underline transition">
+                <FaUserShield /> Admin Panel
+              </Link>
+            )}
+            
+            {/* Auth Logic: Show User Name or Login/Signup */}
+            {user ? (
+              <div className="flex items-center gap-4 bg-gray-800 px-4 py-2 rounded-lg border border-gray-600">
+                <div className="flex items-center gap-2">
+                  <FaUserCircle className="text-accent text-xl" />
+                  <span className="text-sm font-bold uppercase">{user.name}</span>
+                </div>
+                <button 
+                  onClick={handleLogout}
+                  className="text-red-400 hover:text-red-300 transition text-sm flex items-center gap-1 border-l border-gray-500 pl-4"
+                >
+                  <FaSignOutAlt /> Logout
+                </button>
+              </div>
+            ) : (
+              <div className="flex items-center gap-4">
+                <Link to="/login" className="hover:text-accent transition border border-white px-4 py-1.5 rounded-lg">
+                  Login
+                </Link>
+                <Link to="/signup" className="bg-secondary px-5 py-2 rounded-lg font-bold shadow-md hover:bg-blue-600 transition">
+                  Sign Up
+                </Link>
+              </div>
+            )}
           </div>
         </div>
       </nav>

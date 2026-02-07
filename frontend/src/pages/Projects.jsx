@@ -14,6 +14,9 @@ const Projects = () => {
   // 🌍 EXTERNAL API STATE: Live Exchange Rate
   const [exchangeRate, setExchangeRate] = useState(null);
 
+  // 🔐 AUTH STATE: Get current user role
+  const [user, setUser] = useState(null);
+
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -26,7 +29,17 @@ const Projects = () => {
   useEffect(() => {
     fetchProjects();
     fetchExchangeRate(); // <--- Call External API on load
+    
+    // Get user info from localStorage
+    const savedUser = localStorage.getItem('user');
+    if (savedUser) {
+        setUser(JSON.parse(savedUser));
+    }
   }, []);
+
+  // Define simple role checks
+  const isAdmin = user?.role === 'admin';
+  const canEditOrCreate = user?.role === 'admin' || user?.role === 'partner' || user?.role === 'government';
 
   // 1. Fetch Projects (Internal API)
   const fetchProjects = async () => {
@@ -66,7 +79,10 @@ const Projects = () => {
 
       const response = await fetch(url, {
         method: method,
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('token')}` // Pass token for security
+        },
         body: JSON.stringify(formData)
       });
       
@@ -105,9 +121,12 @@ const Projects = () => {
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm("Are you sure?")) return;
+    if (!window.confirm("Are you sure? Only Admin can perform this action.")) return;
     try {
-        await fetch(`http://localhost:5000/api/projects/${id}`, { method: 'DELETE' });
+        await fetch(`http://localhost:5000/api/projects/${id}`, { 
+            method: 'DELETE',
+            headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+        });
         setProjects(projects.filter(project => project._id !== id));
     } catch (error) {
         console.error("Error deleting:", error);
@@ -179,12 +198,15 @@ const Projects = () => {
                 />
             </div>
             
-            <button 
-                onClick={() => { if (showForm) resetForm(); else setShowForm(true); }}
-                className={`${showForm ? 'bg-red-500' : 'bg-secondary'} text-white px-6 py-3 rounded-lg font-bold flex items-center gap-2 hover:opacity-90 transition shadow-lg whitespace-nowrap`}
-            >
-                {showForm ? <><FaTimes /> Close</> : <><FaPlus /> New Project</>}
-            </button>
+            {/* 🛡️ RULE: ONLY Partners, Gov, or Admin can see the 'New Project' button */}
+            {canEditOrCreate && (
+                <button 
+                    onClick={() => { if (showForm) resetForm(); else setShowForm(true); }}
+                    className={`${showForm ? 'bg-red-500' : 'bg-secondary'} text-white px-6 py-3 rounded-lg font-bold flex items-center gap-2 hover:opacity-90 transition shadow-lg whitespace-nowrap`}
+                >
+                    {showForm ? <><FaTimes /> Close</> : <><FaPlus /> New Project</>}
+                </button>
+            )}
         </div>
       </div>
 
@@ -246,7 +268,7 @@ const Projects = () => {
             <div key={project._id} className="relative bg-white p-6 rounded-xl shadow-sm hover:shadow-xl transition border border-gray-100 flex flex-col justify-between h-full group">
               
               <div className="absolute top-4 right-4 flex gap-2">
-                {/* 📄 PDF Button */}
+                {/* 📄 PDF Button - Everyone can see */}
                 <button 
                     onClick={() => generatePDF(project)} 
                     className="text-gray-300 hover:text-green-600 transition p-2"
@@ -254,8 +276,16 @@ const Projects = () => {
                 >
                     <FaFilePdf />
                 </button>
-                <button onClick={() => handleEdit(project)} className="text-gray-300 hover:text-blue-500 transition p-2"><FaEdit /></button>
-                <button onClick={() => handleDelete(project._id)} className="text-gray-300 hover:text-red-500 transition p-2"><FaTrash /></button>
+
+                {/* 🛡️ RULE: Only Admin, Partner, and Gov can EDIT */}
+                {canEditOrCreate && (
+                    <button onClick={() => handleEdit(project)} className="text-gray-300 hover:text-blue-500 transition p-2"><FaEdit /></button>
+                )}
+
+                {/* 🛡️ RULE: Only ADMIN can DELETE */}
+                {isAdmin && (
+                    <button onClick={() => handleDelete(project._id)} className="text-gray-300 hover:text-red-500 transition p-2"><FaTrash /></button>
+                )}
               </div>
 
               <div className="flex justify-between items-start mb-4 pr-24"> 
