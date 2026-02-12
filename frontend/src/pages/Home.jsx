@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { FaGlobeAsia, FaHandshake, FaCheckCircle, FaSpinner, FaUserCircle, FaSignOutAlt, FaUserShield } from 'react-icons/fa';
+import { FaGlobeAsia, FaHandshake, FaCheckCircle, FaSpinner, FaUserCircle, FaSignOutAlt, FaUserShield, FaBullseye } from 'react-icons/fa';
 
 const Home = () => {
   const [stats, setStats] = useState({
@@ -67,8 +67,13 @@ const Home = () => {
           <div className="flex items-center space-x-6 font-medium">
             <Link to="/" className="hover:text-accent transition">Home</Link>
             <Link to="/projects" className="hover:text-accent transition">Projects</Link>
+            
+            {/* SDG Management Link in Navbar */}
+            <Link to="/sdg-management" className="hover:text-accent transition flex items-center gap-1">
+              <FaBullseye /> SDG Targets
+            </Link>
 
-            {/* NEW: Admin Dashboard link - Only visible if user role is admin */}
+            {/* Admin Dashboard link - Only visible if user role is admin */}
             {user?.role === 'admin' && (
               <Link to="/admin" className="text-accent flex items-center gap-1 hover:underline transition">
                 <FaUserShield /> Admin Panel
@@ -115,8 +120,14 @@ const Home = () => {
             Manage projects, visualize data, and sync with partners in real-time.
           </p>
           <div className="flex justify-center gap-6">
-            <Link to="/projects" className="flex items-center gap-2 bg-primary text-white px-8 py-4 rounded-lg text-lg font-bold hover:bg-opacity-90 transition shadow-xl">
+            {/* ✅ UPDATED: "Get Started" now goes to SDG Management */}
+            <Link to="/sdg-management" className="flex items-center gap-2 bg-primary text-white px-8 py-4 rounded-lg text-lg font-bold hover:bg-opacity-90 transition shadow-xl">
               <FaHandshake /> Get Started
+            </Link>
+            
+            {/* SDG Management Button in Hero - Updated gradient to match navbar */}
+            <Link to="/sdg-management" className="flex items-center gap-2 bg-gradient-to-r from-teal-600 to-blue-600 text-white px-8 py-4 rounded-lg text-lg font-bold hover:opacity-90 transition shadow-xl">
+              <FaBullseye /> Manage SDG Targets
             </Link>
           </div>
         </div>
@@ -166,6 +177,26 @@ const Home = () => {
             </div>
 
           </div>
+        </div>
+      </section>
+
+      {/* ✅ SDG Management CTA Section - Updated gradient to match navbar */}
+      <section className="py-16 bg-gradient-to-r from-primary to-blue-600">
+        <div className="container mx-auto px-6 text-center">
+          <h2 className="text-4xl font-bold text-white mb-4">
+            🎯 Manage SDG Target Definitions
+          </h2>
+          <p className="text-xl text-white opacity-90 mb-8 max-w-3xl mx-auto">
+            As Member 02, you're responsible for maintaining Goal 17 targets and indicators. 
+            Keep them synced with UN global standards and ensure compliance across the registry.
+          </p>
+          <Link 
+            to="/sdg-management" 
+            className="inline-flex items-center gap-2 bg-white text-primary px-10 py-4 rounded-lg text-lg font-bold hover:bg-gray-100 transition shadow-2xl"
+          >
+            <FaBullseye className="text-2xl" /> 
+            Go to SDG Management
+          </Link>
         </div>
       </section>
     </div>

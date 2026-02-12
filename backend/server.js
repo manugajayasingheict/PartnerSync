@@ -1,34 +1,75 @@
 const express = require('express');
-const dotenv = require('dotenv');
+const mongoose = require('mongoose');
 const cors = require('cors');
-const connectDB = require('./config/db');
+require('dotenv').config();
 
-// Load environment variables
-dotenv.config();
-connectDB();
-
-// Initialize Express
 const app = express();
 
 // Middleware
-app.use(express.json());
 app.use(cors());
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
-// Define Routes
-app.use('/api/auth', require('./routes/authRoutes'));       // ✅ Member 01 (You made this)
-app.use('/api/projects', require('./routes/projectRoutes')); // ✅ Member 03 (You made this)
-
-// 👇 COMMENT THESE OUT until teammates create the files!
-// app.use('/api/sdg', require('./routes/sdgRoutes'));       // ❌ Member 02 (Not ready?)
-// app.use('/api/reports', require('./routes/reportRoutes')); // ❌ Member 04 (Not ready?)
-
-// Root Route
-app.get('/', (req, res) => {
-    res.send('PartnerSync API is running...');
+// Logging middleware
+app.use((req, res, next) => {
+  console.log(`${req.method} ${req.path}`);
+  next();
 });
 
-// Start Server
+// Routes
+const sdgRoutes = require('./routes/sdgRoutes');
+app.use('/api/sdg', sdgRoutes);
+
+// Test route
+app.get('/', (req, res) => {
+  res.json({ 
+    message: 'SDG Target Management API is running',
+    version: '1.0.0',
+    endpoints: {
+      create: 'POST /api/sdg/create',
+      getAll: 'GET /api/sdg/all',
+      getOne: 'GET /api/sdg/:id',
+      update: 'PUT /api/sdg/update/:id',
+      delete: 'DELETE /api/sdg/delete/:id',
+      syncUN: 'POST /api/sdg/sync-un'
+    }
+  });
+});
+
+// Database connection
+const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/sdg-partnership';
+
+mongoose.connect(MONGO_URI)
+  .then(() => {
+    console.log('✅ MongoDB connected successfully');
+    console.log('📊 Database:', mongoose.connection.name);
+  })
+  .catch((err) => {
+    console.error('❌ MongoDB connection error:', err.message);
+    process.exit(1);
+  });
+
+// Error handling middleware
+app.use((err, req, res, next) => {
+  console.error('Server Error:', err.stack);
+  res.status(500).json({
+    success: false,
+    message: 'Something went wrong!',
+    error: err.message
+  });
+});
+
+// Handle 404
+app.use((req, res) => {
+  res.status(404).json({
+    success: false,
+    message: 'Route not found'
+  });
+});
+
+// Server start
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
+  console.log(`🚀 Server running on port ${PORT}`);
+  console.log(`📍 API: http://localhost:${PORT}/api/sdg`);
 });
