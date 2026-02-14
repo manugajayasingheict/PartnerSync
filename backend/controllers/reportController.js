@@ -1,4 +1,5 @@
 const Report = require('../models/Report');
+const Project = require('../models/Project');
 const axios = require('axios');
 
 // @desc    Submit a new progress report with auto USD conversion
@@ -7,6 +8,23 @@ const axios = require('axios');
 exports.submitReport = async (req, res) => {
     try {
         const { project, reportType, amountLKR, peopleImpacted, description } = req.body;
+
+        // Validation: Check if project exists and is "In Progress"
+        const projectDoc = await Project.findById(project);
+        
+        if (!projectDoc) {
+            return res.status(404).json({ 
+                success: false, 
+                error: 'Project not found' 
+            });
+        }
+
+        if (projectDoc.status !== 'In Progress') {
+            return res.status(400).json({ 
+                success: false, 
+                error: 'Reports can only be submitted for projects marked "In Progress"' 
+            });
+        }
 
         let amountUSD = null;
         let exchangeRate = null;
@@ -157,6 +175,72 @@ exports.removeReport = async (req, res) => {
             data: {} 
         });
     } catch (error) {
+        res.status(400).json({ success: false, error: error.message });
+    }
+};
+
+// @desc    Update a report entry
+// @route   PUT /api/reports/update/:id
+// @access  Private (Admin or Report Owner)
+exports.updateReport = async (req, res) => {
+    try {
+        const report = await Report.findById(req.params.id);
+
+        if (!report) {
+            return res.status(404).json({ success: false, error: 'Report not found' });
+        }
+
+        // Check if user is admin or the one who submitted the report
+        if (req.user.role !== 'admin' && report.reportedBy.toString() !== req.user._id.toString()) {
+            return res.status(403).json({ 
+                success: false, 
+                error: 'Not authorized to update this report' 
+            });
+        }
+
+        const { reportType, amountLKR, peopleImpacted, description } = req.body;
+
+        // If updating to financial report with new amount, recalculate USD
+        let amountUSD = report.amountUSD;
+        let exchangeRate = report.exchangeRate;
+
+        if (reportType === 'financial' && amountLKR && amountLKR !== report.amountLKR) {
+            try {
+                const rateResponse = await axios.get('https://api.exchangerate-api.com/v4/latest/LKR');
+                exchangeRate = rateResponse.data.rates.USD;
+                amountUSD = (amountLKR * exchangeRate).toFixed(2);
+            } catch (error) {
+                console.error('Exchange rate API failed:', error.message);
+                // Keep existing USD value if API fails
+            }
+        }
+
+        // Update fields
+        if (reportType !== undefined) report.reportType = reportType;
+        if (amountLKR !== undefined) {
+            report.amountLKR = amountLKR;
+            report.amountUSD = amountUSD;
+            report.exchangeRate = exchangeRate;
+        }
+        if (peopleImpacted !== undefined) report.peopleImpacted = peopleImpacted;
+        if (description !== undefined) report.description = description;
+
+        await report.save();
+
+        // Populate details before sending response
+        await report.populate('project', 'title organization');
+        await report.populate('reportedBy', 'name email');
+
+        res.status(200).json({
+            success: true,
+            data: report,
+            message: 'Report updated successfully'
+        });
+    } catch (error) {
+        if (error.name === 'ValidationError') {
+            const messages = Object.values(error.errors).map(val => val.message);
+            return res.status(400).json({ success: false, error: messages });
+        }
         res.status(400).json({ success: false, error: error.message });
     }
 };

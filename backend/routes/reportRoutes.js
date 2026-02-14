@@ -4,7 +4,8 @@ const {
     submitReport,
     getProjectReports,
     getStatsSummary,
-    removeReport
+    removeReport,
+    updateReport
 } = require('../controllers/reportController');
 
 // Import authentication middleware
@@ -22,6 +23,9 @@ router.get('/stats/summary', getStatsSummary);
 
 // Submit a new report (Admin, Partner, Government only)
 router.post('/submit', protect, authorize('admin', 'partner', 'government'), submitReport);
+
+// Update a report (Admin or Report Owner)
+router.put('/update/:id', protect, updateReport);
 
 // Delete a report (Admin or Report Owner)
 router.delete('/remove/:id', protect, removeReport);
