@@ -1,17 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FaChartLine, FaDollarSign, FaUsers, FaPlus, FaTimes, FaSpinner, FaMoneyBillWave, FaClipboardList, FaExclamationTriangle, FaArrowRight, FaChevronLeft, FaChevronRight } from 'react-icons/fa';
+import { FaChartLine, FaDollarSign, FaUsers, FaTimes, FaSpinner, FaMoneyBillWave, FaClipboardList, FaExclamationTriangle, FaArrowRight, FaChevronLeft, FaChevronRight } from 'react-icons/fa';
 import axios from 'axios';
 
 const Reports = () => {
   const navigate = useNavigate();
   
   const [stats, setStats] = useState(null);
-  const [projects, setProjects] = useState([]);
   const [projectsWithStats, setProjectsWithStats] = useState([]);
-  const [showForm, setShowForm] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [user, setUser] = useState(null);
   
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
@@ -27,28 +24,12 @@ const Reports = () => {
   });
   const [organizations, setOrganizations] = useState([]);
 
-  const [formData, setFormData] = useState({
-    project: '',
-    reportType: 'financial',
-    amountLKR: '',
-    peopleImpacted: '',
-    description: ''
-  });
-
   useEffect(() => {
     fetchStats();
-    fetchAllProjects(); // For form dropdown
     fetchOrganizations(); // For filter dropdown
     fetchProjectsWithStats(1); // For cards grid
-    
-    const savedUser = localStorage.getItem('user');
-    if (savedUser) {
-      setUser(JSON.parse(savedUser));
-    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  const canSubmitReport = user?.role === 'admin' || user?.role === 'partner' || user?.role === 'government';
 
   const fetchStats = async () => {
     try {
@@ -60,17 +41,6 @@ const Reports = () => {
       console.error('Error fetching stats:', error);
     } finally {
       setLoading(false);
-    }
-  };
-
-  const fetchAllProjects = async () => {
-    try {
-      const response = await axios.get('http://localhost:5000/api/projects');
-      if (response.data.success) {
-        setProjects(response.data.data);
-      }
-    } catch (error) {
-      console.error('Error fetching projects:', error);
     }
   };
 
@@ -105,44 +75,6 @@ const Reports = () => {
     }
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    
-    if (!formData.project) {
-      alert('Please select a project');
-      return;
-    }
-
-    try {
-      const token = localStorage.getItem('token');
-      const response = await axios.post(
-        'http://localhost:5000/api/reports/submit',
-        formData,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-
-      if (response.data.success) {
-        alert(response.data.message);
-        resetForm();
-        fetchStats();
-        fetchProjectsWithStats(currentPage); // Refresh current page
-      }
-    } catch (error) {
-      alert(error.response?.data?.error || 'Failed to submit report');
-    }
-  };
-
-  const resetForm = () => {
-    setFormData({
-      project: '',
-      reportType: 'financial',
-      amountLKR: '',
-      peopleImpacted: '',
-      description: ''
-    });
-    setShowForm(false);
-  };
-
   const handlePageChange = (page) => {
     if (page >= 1 && page <= totalPages) {
       fetchProjectsWithStats(page);
@@ -175,131 +107,20 @@ const Reports = () => {
   const activeFiltersCount = Object.values(filters).filter(v => v !== '').length;
 
   const handleProjectCardClick = (projectId) => {
-    navigate(`/projects/${projectId}/reports`);
+    navigate(`/projects/${projectId}`);
   };
-
-  // Filter only "In Progress" projects for the form dropdown
-  const inProgressProjects = projects.filter(p => p.status === 'In Progress');
 
   return (
     <div className="min-h-screen bg-neutral p-8 font-sans">
       {/* Header */}
       <div className="max-w-7xl mx-auto mb-10">
-        <div className="flex justify-between items-center">
-          <div>
-            <h1 className="text-4xl font-bold text-primary mb-2 flex items-center gap-3">
-              <FaChartLine /> Progress & Impact Reports
-            </h1>
-            <p className="text-gray-500">Track financial impact and milestones across all projects</p>
-          </div>
-          
-          {canSubmitReport && (
-            <button 
-              onClick={() => { if (showForm) resetForm(); else setShowForm(true); }}
-              className={`${showForm ? 'bg-red-500' : 'bg-secondary'} text-white px-6 py-3 rounded-lg font-bold flex items-center gap-2 hover:opacity-90 transition shadow-lg`}
-            >
-              {showForm ? <><FaTimes /> Close</> : <><FaPlus /> New Report</>}
-            </button>
-          )}
+        <div>
+          <h1 className="text-4xl font-bold text-primary mb-2 flex items-center gap-3">
+            <FaChartLine /> Progress & Impact Reports
+          </h1>
+          <p className="text-gray-500">Track financial impact and milestones across all projects</p>
         </div>
       </div>
-
-      {/* Report Submission Form */}
-      {showForm && (
-        <div className="max-w-3xl mx-auto bg-white p-8 rounded-xl shadow-md mb-10 border-t-4 border-secondary animate-fade-in">
-          <h2 className="text-2xl font-bold text-gray-800 mb-6">Submit Progress Report</h2>
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="col-span-2">
-                <label className="block text-sm font-bold text-gray-700 mb-2">Select Project</label>
-                <select 
-                  className="w-full p-3 border rounded-lg"
-                  value={formData.project}
-                  onChange={(e) => setFormData({...formData, project: e.target.value})}
-                  required
-                >
-                  <option value="">-- Choose a project --</option>
-                  {inProgressProjects.length === 0 ? (
-                    <option disabled>No "In Progress" projects available</option>
-                  ) : (
-                    inProgressProjects.map(project => (
-                      <option key={project._id} value={project._id}>
-                        {project.title} ({project.organization}) - In Progress
-                      </option>
-                    ))
-                  )}
-                </select>
-                {inProgressProjects.length === 0 && (
-                  <p className="text-xs text-red-500 mt-1">
-                    Reports can only be submitted for projects marked "In Progress"
-                  </p>
-                )}
-              </div>
-
-              <div>
-                <label className="block text-sm font-bold text-gray-700 mb-2">Report Type</label>
-                <select 
-                  className="w-full p-3 border rounded-lg"
-                  value={formData.reportType}
-                  onChange={(e) => setFormData({...formData, reportType: e.target.value})}
-                >
-                  <option value="financial">Financial Report</option>
-                  <option value="people_helped">People Impacted</option>
-                  <option value="milestone">Milestone Achievement</option>
-                  <option value="other">Other</option>
-                </select>
-              </div>
-
-              {formData.reportType === 'financial' && (
-                <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-2">Amount Spent (LKR)</label>
-                  <input 
-                    type="number" 
-                    className="w-full p-3 border rounded-lg"
-                    placeholder="50000"
-                    value={formData.amountLKR}
-                    onChange={(e) => setFormData({...formData, amountLKR: e.target.value})}
-                    required={formData.reportType === 'financial'}
-                  />
-                  <p className="text-xs text-gray-400 mt-1">USD conversion will be automatic</p>
-                </div>
-              )}
-
-              {formData.reportType === 'people_helped' && (
-                <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-2">Number of People</label>
-                  <input 
-                    type="number" 
-                    className="w-full p-3 border rounded-lg"
-                    placeholder="150"
-                    value={formData.peopleImpacted}
-                    onChange={(e) => setFormData({...formData, peopleImpacted: e.target.value})}
-                    required={formData.reportType === 'people_helped'}
-                  />
-                </div>
-              )}
-
-              <div className="col-span-2">
-                <label className="block text-sm font-bold text-gray-700 mb-2">Description</label>
-                <textarea 
-                  className="w-full p-3 border rounded-lg h-24"
-                  placeholder="Describe the progress or impact..."
-                  value={formData.description}
-                  onChange={(e) => setFormData({...formData, description: e.target.value})}
-                  required
-                ></textarea>
-              </div>
-            </div>
-
-            <button 
-              type="submit"
-              className="w-full bg-primary text-white font-bold py-3 rounded-lg hover:bg-gray-800 transition shadow-lg"
-            >
-              Submit Report
-            </button>
-          </form>
-        </div>
-      )}
 
       {/* Statistics Dashboard */}
       {loading ? (

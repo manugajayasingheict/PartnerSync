@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import { FaChartLine, FaDollarSign, FaUsers, FaMoneyBillWave, FaClipboardList, FaTrash, FaEdit, FaTimes, FaSpinner, FaExclamationTriangle, FaCheckCircle } from 'react-icons/fa';
+import { FaChartLine, FaDollarSign, FaUsers, FaMoneyBillWave, FaClipboardList, FaTrash, FaEdit, FaTimes, FaSpinner, FaExclamationTriangle, FaCheckCircle, FaPlus } from 'react-icons/fa';
 import axios from 'axios';
 
 const ProjectDetails = () => {
@@ -12,6 +12,15 @@ const ProjectDetails = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [user, setUser] = useState(null);
+  
+  // Report submission state
+  const [showForm, setShowForm] = useState(false);
+  const [formData, setFormData] = useState({
+    reportType: 'financial',
+    amountLKR: '',
+    peopleImpacted: '',
+    description: ''
+  });
   
   // Edit state
   const [editingReport, setEditingReport] = useState(null);
@@ -52,6 +61,39 @@ const ProjectDetails = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const canSubmitReport = user?.role === 'admin' || user?.role === 'partner' || user?.role === 'government';
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.post(
+        'http://localhost:5000/api/reports/submit',
+        { ...formData, project: id },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      if (response.data.success) {
+        alert(response.data.message);
+        resetForm();
+        fetchProjectData(); // Refresh all data
+      }
+    } catch (error) {
+      alert(error.response?.data?.error || 'Failed to submit report');
+    }
+  };
+
+  const resetForm = () => {
+    setFormData({
+      reportType: 'financial',
+      amountLKR: '',
+      peopleImpacted: '',
+      description: ''
+    });
+    setShowForm(false);
   };
 
   const handleDeleteReport = async (reportId) => {
@@ -224,17 +266,99 @@ const ProjectDetails = () => {
               </div>
             </div>
             
-            <span className={`px-4 py-2 rounded-full text-sm font-bold border ${
-              project.status === 'Completed' ? 'bg-green-100 text-green-700 border-green-300' :
-              project.status === 'In Progress' ? 'bg-blue-100 text-blue-700 border-blue-300' :
-              project.status === 'Cancelled' ? 'bg-red-100 text-red-700 border-red-300' :
-              'bg-yellow-100 text-yellow-800 border-yellow-300'
-            }`}>
-              {project.status}
-            </span>
+            <div className="flex items-center gap-3">
+              <span className={`px-4 py-2 rounded-full text-sm font-bold border ${
+                project.status === 'Completed' ? 'bg-green-100 text-green-700 border-green-300' :
+                project.status === 'In Progress' ? 'bg-blue-100 text-blue-700 border-blue-300' :
+                project.status === 'Cancelled' ? 'bg-red-100 text-red-700 border-red-300' :
+                'bg-yellow-100 text-yellow-800 border-yellow-300'
+              }`}>
+                {project.status}
+              </span>
+              
+              {canSubmitReport && project.status === 'In Progress' && (
+                <button 
+                  onClick={() => { if (showForm) resetForm(); else setShowForm(true); }}
+                  className={`${showForm ? 'bg-red-500' : 'bg-secondary'} text-white px-5 py-2 rounded-lg font-bold flex items-center gap-2 hover:opacity-90 transition shadow-lg text-sm`}
+                >
+                  {showForm ? <><FaTimes /> Close</> : <><FaPlus /> Submit Report</>}
+                </button>
+              )}
+            </div>
           </div>
         </div>
       </div>
+
+      {/* Report Submission Form */}
+      {showForm && (
+        <div className="max-w-7xl mx-auto bg-white p-8 rounded-xl shadow-md mb-10 border-t-4 border-secondary animate-fade-in">
+          <h2 className="text-2xl font-bold text-gray-800 mb-6">Submit Progress Report for {project.title}</h2>
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-2">Report Type</label>
+                <select 
+                  className="w-full p-3 border rounded-lg"
+                  value={formData.reportType}
+                  onChange={(e) => setFormData({...formData, reportType: e.target.value})}
+                >
+                  <option value="financial">Financial Report</option>
+                  <option value="people_helped">People Impacted</option>
+                  <option value="milestone">Milestone Achievement</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
+
+              {formData.reportType === 'financial' && (
+                <div>
+                  <label className="block text-sm font-bold text-gray-700 mb-2">Amount Spent (LKR)</label>
+                  <input 
+                    type="number" 
+                    className="w-full p-3 border rounded-lg"
+                    placeholder="50000"
+                    value={formData.amountLKR}
+                    onChange={(e) => setFormData({...formData, amountLKR: e.target.value})}
+                    required={formData.reportType === 'financial'}
+                  />
+                  <p className="text-xs text-gray-400 mt-1">USD conversion will be automatic</p>
+                </div>
+              )}
+
+              {formData.reportType === 'people_helped' && (
+                <div>
+                  <label className="block text-sm font-bold text-gray-700 mb-2">Number of People</label>
+                  <input 
+                    type="number" 
+                    className="w-full p-3 border rounded-lg"
+                    placeholder="150"
+                    value={formData.peopleImpacted}
+                    onChange={(e) => setFormData({...formData, peopleImpacted: e.target.value})}
+                    required={formData.reportType === 'people_helped'}
+                  />
+                </div>
+              )}
+
+              <div className="col-span-2">
+                <label className="block text-sm font-bold text-gray-700 mb-2">Description</label>
+                <textarea 
+                  className="w-full p-3 border rounded-lg h-24"
+                  placeholder="Describe the progress or impact..."
+                  value={formData.description}
+                  onChange={(e) => setFormData({...formData, description: e.target.value})}
+                  required
+                ></textarea>
+              </div>
+            </div>
+
+            <button 
+              type="submit"
+              className="w-full bg-primary text-white font-bold py-3 rounded-lg hover:bg-gray-800 transition shadow-lg"
+            >
+              Submit Report
+            </button>
+          </form>
+        </div>
+      )}
 
       {/* Dashboard - 4 Tiles */}
       <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-6 mb-10">
