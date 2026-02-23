@@ -39,14 +39,13 @@ function App() {
     <Router>
       <Routes>
 
-<<<<<<< HEAD
+
         <Route path="/" element={<Login />} />
         
         <Route path="/home" element={<Home />} />
         {/* Other Routes */}
 
-=======
->>>>>>> d279d67a09fca3b547c48da28e596556ffc9a3e3
+
         {/* Public Routes */}
         <Route path="/" element={<Home />} />
 
