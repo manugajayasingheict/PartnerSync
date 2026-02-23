@@ -1,16 +1,25 @@
 {
   "name": "backend",
   "version": "1.0.0",
+  "description": "SDG Goal 17 Target Management Backend",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
     "dev": "nodemon server.js"
   },
-  "keywords": [],
+  "keywords": ["sdg", "goal17"],
   "author": "",
   "license": "ISC",
-  "description": "",
   "dependencies": {
+<<<<<<< HEAD
+=======
+
+    "express": "^4.18.2",
+    "mongoose": "^8.0.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "axios": "^1.6.0",
+>>>>>>> d279d67a09fca3b547c48da28e596556ffc9a3e3
     "axios": "^1.13.5",
     "bcryptjs": "^3.0.3",
     "cors": "^2.8.6",
@@ -18,8 +27,9 @@
     "express": "^5.2.1",
     "jsonwebtoken": "^9.0.3",
     "mongoose": "^9.1.6"
+
   },
   "devDependencies": {
-    "nodemon": "^3.1.11"
+    "nodemon": "^3.0.1"
   }
 }
