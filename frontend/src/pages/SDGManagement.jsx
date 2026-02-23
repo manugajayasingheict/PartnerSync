@@ -32,11 +32,11 @@ const SDGManagement = () => {
     } finally {
       setLoading(false);
     }
-  }, []); // Empty dependency array since it doesn't depend on any props or state
+  }, []);
 
   useEffect(() => {
     fetchAllSDGs();
-  }, [fetchAllSDGs]); // ✅ Now includes fetchAllSDGs
+  }, [fetchAllSDGs]);
 
   const handleChange = (e) => {
     setFormData({
@@ -47,7 +47,6 @@ const SDGManagement = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
     try {
       if (editingId) {
         await axios.put(`${API_URL}/update/${editingId}`, formData);
@@ -57,7 +56,7 @@ const SDGManagement = () => {
         await axios.post(`${API_URL}/create`, formData);
         showMessage('success', 'SDG target created successfully!');
       }
-      
+
       setFormData({
         targetNumber: '',
         title: '',
@@ -65,7 +64,7 @@ const SDGManagement = () => {
         indicatorCode: '',
         benchmark: ''
       });
-      
+
       fetchAllSDGs();
     } catch (error) {
       console.error('Submit error:', error);
@@ -86,9 +85,7 @@ const SDGManagement = () => {
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm('Are you sure you want to delete this SDG target?')) {
-      return;
-    }
+    if (!window.confirm('Are you sure you want to delete this SDG target?')) return;
 
     try {
       await axios.delete(`${API_URL}/delete/${id}`);
@@ -101,20 +98,20 @@ const SDGManagement = () => {
   };
 
   const handleUNSync = async () => {
-    if (!window.confirm('Sync with UN Global Standards? This may take a minute.')) {
-      return;
-    }
+    if (!window.confirm('Sync with UN Global Standards? This may take a minute.')) return;
 
     try {
       setSyncing(true);
       const response = await axios.post(`${API_URL}/sync-un`);
-      
-      showMessage('success', 
-        `✅ ${response.data.message}\n` +
-        `New targets: ${response.data.stats.newTargets}\n` +
-        `Updated targets: ${response.data.stats.updatedTargets}`
-      );
-      
+
+      // Build message including failed targets if any
+      let msg = `✅ ${response.data.message}\nNew targets: ${response.data.stats.newTargets}\nUpdated targets: ${response.data.stats.updatedTargets}`;
+      if (response.data.stats.failedTargets && response.data.stats.failedTargets.length > 0) {
+        msg += `\n⚠️ Failed targets: ${response.data.stats.failedTargets.map(t => t.targetNumber).join(', ')}`;
+      }
+
+      showMessage('success', msg);
+
       fetchAllSDGs();
     } catch (error) {
       console.error('Sync error:', error);
@@ -147,16 +144,14 @@ const SDGManagement = () => {
 
       {message.text && (
         <div className={`alert alert-${message.type}`}>
-          {message.text}
+          {message.text.split('\n').map((line, idx) => (
+            <div key={idx}>{line}</div>
+          ))}
         </div>
       )}
 
       <div className="sync-section">
-        <button 
-          onClick={handleUNSync} 
-          disabled={syncing}
-          className="btn-sync"
-        >
+        <button onClick={handleUNSync} disabled={syncing} className="btn-sync">
           {syncing ? '⏳ Syncing...' : '🌍 Sync with UN Global Standards'}
         </button>
         <p className="sync-hint">
@@ -271,12 +266,8 @@ const SDGManagement = () => {
                   </p>
                 )}
                 <div className="card-actions">
-                  <button onClick={() => handleEdit(sdg)} className="btn-edit">
-                    ✏️ Edit
-                  </button>
-                  <button onClick={() => handleDelete(sdg._id)} className="btn-delete">
-                    🗑️ Delete
-                  </button>
+                  <button onClick={() => handleEdit(sdg)} className="btn-edit">✏️ Edit</button>
+                  <button onClick={() => handleDelete(sdg._id)} className="btn-delete">🗑️ Delete</button>
                 </div>
               </div>
             ))}

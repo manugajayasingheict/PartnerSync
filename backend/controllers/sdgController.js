@@ -1,7 +1,11 @@
+// backend/controllers/sdgController.js
+
 const SDG = require('../models/sdgModel');
 const axios = require('axios');
 
+// ----------------------------
 // Create new SDG target
+// ----------------------------
 exports.createSDG = async (req, res) => {
   try {
     const { targetNumber, title, description, indicatorCode, benchmark } = req.body;
@@ -38,7 +42,9 @@ exports.createSDG = async (req, res) => {
   }
 };
 
+// ----------------------------
 // Get all SDG targets
+// ----------------------------
 exports.getAllSDGs = async (req, res) => {
   try {
     const sdgs = await SDG.find({ category: 'Goal 17' })
@@ -60,7 +66,9 @@ exports.getAllSDGs = async (req, res) => {
   }
 };
 
+// ----------------------------
 // Get single SDG by ID
+// ----------------------------
 exports.getSDGById = async (req, res) => {
   try {
     const { id } = req.params;
@@ -78,6 +86,7 @@ exports.getSDGById = async (req, res) => {
       data: sdg
     });
   } catch (error) {
+    console.error('Get By ID Error:', error);
     res.status(500).json({
       success: false,
       message: 'Error fetching SDG target',
@@ -86,7 +95,9 @@ exports.getSDGById = async (req, res) => {
   }
 };
 
+// ----------------------------
 // Update SDG target
+// ----------------------------
 exports.updateSDG = async (req, res) => {
   try {
     const { id } = req.params;
@@ -120,7 +131,9 @@ exports.updateSDG = async (req, res) => {
   }
 };
 
+// ----------------------------
 // Delete SDG target
+// ----------------------------
 exports.deleteSDG = async (req, res) => {
   try {
     const { id } = req.params;
@@ -149,14 +162,14 @@ exports.deleteSDG = async (req, res) => {
   }
 };
 
-// COOL FEATURE - Sync with UN API
+// ----------------------------
+// Sync with UN API (robust version)
+// ----------------------------
 exports.syncWithUN = async (req, res) => {
   try {
     console.log('Starting UN sync...');
-    
-    // UN API endpoint
-    const UN_API_URL = 'https://unstats.un.org/sdgapi/v1/sdg/Goal/17/Target/List?includechildren=true';
 
+    const UN_API_URL = 'https://unstats.un.org/sdgapi/v1/sdg/Goal/17/Target/List?includechildren=true';
     const response = await axios.get(UN_API_URL, {
       timeout: 30000,
       headers: {
@@ -164,7 +177,7 @@ exports.syncWithUN = async (req, res) => {
         'User-Agent': 'SDG-Partnership-App/1.0'
       }
     });
-    
+
     if (!response.data) {
       return res.status(404).json({
         success: false,
@@ -172,35 +185,40 @@ exports.syncWithUN = async (req, res) => {
       });
     }
 
-    let syncedCount = 0;
-    let updatedCount = 0;
     const targets = Array.isArray(response.data) ? response.data : [response.data];
 
-    console.log(`Processing ${targets.length} targets from UN...`);
+    let syncedCount = 0;
+    let updatedCount = 0;
+    const failedTargets = [];
 
-    for (const target of targets) {
-      if (!target.code && !target.target) continue;
+    await Promise.allSettled(targets.map(async (target) => {
+      try {
+        if (!target.code && !target.target) return;
 
-      const targetData = {
-        targetNumber: target.code || target.target,
-        title: target.title || 'No title available',
-        description: target.description || target.title || 'No description available',
-        isOfficialUN: true,
-        lastSynced: new Date()
-      };
+        const targetData = {
+          targetNumber: target.code || target.target,
+          title: target.title || 'No title available',
+          description: target.description || target.title || 'No description available',
+          isOfficialUN: true,
+          category: 'Goal 17',
+          lastSynced: new Date()
+        };
 
-      const existing = await SDG.findOne({ targetNumber: targetData.targetNumber });
-
-      if (existing) {
-        await SDG.findByIdAndUpdate(existing._id, targetData);
-        updatedCount++;
-      } else {
-        await SDG.create(targetData);
-        syncedCount++;
+        const existing = await SDG.findOne({ targetNumber: targetData.targetNumber });
+        if (existing) {
+          await SDG.findByIdAndUpdate(existing._id, targetData, { runValidators: true });
+          updatedCount++;
+        } else {
+          await SDG.create(targetData);
+          syncedCount++;
+        }
+      } catch (e) {
+        console.error('Failed processing target:', target, e.message);
+        failedTargets.push({ targetNumber: target.code || target.target, error: e.message });
       }
-    }
+    }));
 
-    console.log(`Sync complete: ${syncedCount} new, ${updatedCount} updated`);
+    console.log(`Sync complete: ${syncedCount} new, ${updatedCount} updated, ${failedTargets.length} failed`);
 
     res.status(200).json({
       success: true,
@@ -208,69 +226,40 @@ exports.syncWithUN = async (req, res) => {
       stats: {
         newTargets: syncedCount,
         updatedTargets: updatedCount,
-        totalProcessed: syncedCount + updatedCount
+        failedTargets: failedTargets,
+        totalProcessed: syncedCount + updatedCount + failedTargets.length
       }
     });
 
   } catch (error) {
-    console.error('UN Sync Error:', error.message);
-    
-    // If UN API is down, create sample data
-    if (error.code === 'ENOTFOUND' || error.code === 'ETIMEDOUT') {
-      try {
-        // Create sample Goal 17 targets
-        const sampleTargets = [
-          {
-            targetNumber: '17.1',
-            title: 'Strengthen domestic resource mobilization',
-            description: 'Strengthen domestic resource mobilization, including through international support to developing countries, to improve domestic capacity for tax and other revenue collection',
-            isOfficialUN: false
-          },
-          {
-            targetNumber: '17.2',
-            title: 'Implement all development assistance commitments',
-            description: 'Developed countries to implement fully their official development assistance commitments',
-            isOfficialUN: false
-          },
-          {
-            targetNumber: '17.3',
-            title: 'Mobilize additional financial resources',
-            description: 'Mobilize additional financial resources for developing countries from multiple sources',
-            isOfficialUN: false
-          }
-        ];
+    console.error('UN Sync Error:', error.message, error.code);
 
-        let created = 0;
-        for (const target of sampleTargets) {
-          const existing = await SDG.findOne({ targetNumber: target.targetNumber });
-          if (!existing) {
-            await SDG.create(target);
-            created++;
-          }
-        }
+    // Fallback: create sample targets
+    const sampleTargets = [
+      { targetNumber: '17.1', title: 'Strengthen domestic resource mobilization', description: 'Support developing countries...', category: 'Goal 17', isOfficialUN: false },
+      { targetNumber: '17.2', title: 'Implement all development assistance commitments', description: 'Developed countries to implement...', category: 'Goal 17', isOfficialUN: false },
+      { targetNumber: '17.3', title: 'Mobilize additional financial resources', description: 'Mobilize additional financial resources...', category: 'Goal 17', isOfficialUN: false },
+      { targetNumber: '17.4', title: 'Promote environmentally sound technologies', description: 'Promote tech transfer to developing countries', category: 'Goal 17', isOfficialUN: false },
+      { targetNumber: '17.5', title: 'Enhance international cooperation on science and technology', description: 'Promote knowledge sharing', category: 'Goal 17', isOfficialUN: false },
+    ];
 
-        return res.status(200).json({
-          success: true,
-          message: 'UN API unavailable. Created sample targets instead.',
-          stats: {
-            newTargets: created,
-            updatedTargets: 0,
-            totalProcessed: created
-          }
-        });
-      } catch (sampleError) {
-        return res.status(500).json({
-          success: false,
-          message: 'UN API unavailable and failed to create sample data',
-          error: sampleError.message
-        });
+    let created = 0;
+    for (const target of sampleTargets) {
+      const exists = await SDG.findOne({ targetNumber: target.targetNumber });
+      if (!exists) {
+        await SDG.create(target);
+        created++;
       }
     }
 
-    res.status(500).json({
-      success: false,
-      message: 'Error syncing with UN',
-      error: error.message
+    res.status(200).json({
+      success: true,
+      message: 'UN API unavailable. Created sample targets instead.',
+      stats: {
+        newTargets: created,
+        updatedTargets: 0,
+        totalProcessed: created
+      }
     });
   }
 };
