@@ -39,6 +39,13 @@ function App() {
     <Router>
       <Routes>
 
+
+        <Route path="/" element={<Login />} />
+        
+        <Route path="/home" element={<Home />} />
+        {/* Other Routes */}
+
+
         {/* Public Routes */}
         <Route path="/" element={<Home />} />
 
@@ -48,7 +55,10 @@ function App() {
         <Route path="/projects/:id" element={<ProjectDetails />} />
 
         <Route path="/login" element={<Login />} />
+
         <Route path="/signup" element={<Signup />} />
+        
+        <Route path="/projects" element={<Projects />} />
 
         {/* Projects - Public or Protected (choose one below) */}
         <Route path="/projects" element={<Projects />} />
