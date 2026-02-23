@@ -5,6 +5,8 @@ import './App.css';
 // Import ALL your pages
 import Home from './pages/Home';
 import Projects from './pages/Projects';
+import Reports from './pages/Reports';
+import ProjectDetails from './pages/ProjectDetails';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
 import AdminDashboard from './pages/AdminDashboard';
@@ -39,6 +41,12 @@ function App() {
 
         {/* Public Routes */}
         <Route path="/" element={<Home />} />
+
+
+        <Route path="/projects" element={<Projects />} />
+        <Route path="/reports" element={<Reports />} />
+        <Route path="/projects/:id" element={<ProjectDetails />} />
+
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
 

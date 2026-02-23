@@ -67,11 +67,15 @@ const Home = () => {
           <div className="flex items-center space-x-6 font-medium">
             <Link to="/" className="hover:text-accent transition">Home</Link>
             <Link to="/projects" className="hover:text-accent transition">Projects</Link>
+<<<<<<< HEAD
             
             {/* SDG Management Link in Navbar */}
             <Link to="/sdg-management" className="hover:text-accent transition flex items-center gap-1">
               <FaBullseye /> SDG Targets
             </Link>
+=======
+            <Link to="/reports" className="hover:text-accent transition">Reports</Link>
+>>>>>>> develop
 
             {/* Admin Dashboard link - Only visible if user role is admin */}
             {user?.role === 'admin' && (
