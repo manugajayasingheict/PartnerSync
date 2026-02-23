@@ -23,11 +23,13 @@ function App() {
   return (
     <Router>
       <Routes>
-        {/* Public Routes */}
-        <Route path="/" element={<Home />} />
-        <Route path="/projects" element={<Projects />} />
-        <Route path="/login" element={<Login />} />
+        <Route path="/" element={<Login />} />
+        
+        <Route path="/home" element={<Home />} />
+        {/* Other Routes */}
         <Route path="/signup" element={<Signup />} />
+        
+        <Route path="/projects" element={<Projects />} />
 
         {/* 🔐 Admin Route */}
         <Route 

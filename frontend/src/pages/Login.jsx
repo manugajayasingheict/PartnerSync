@@ -24,7 +24,7 @@ const Login = () => {
 
       // 3. Success! Redirect to Home Page
       alert('Login Successful!');
-      navigate('/'); 
+      navigate('/home'); 
       window.location.reload(); // Refresh to update Navbar
       
     } catch (err) {

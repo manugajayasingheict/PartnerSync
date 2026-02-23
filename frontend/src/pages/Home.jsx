@@ -65,7 +65,7 @@ const Home = () => {
           </div>
           
           <div className="flex items-center space-x-6 font-medium">
-            <Link to="/" className="hover:text-accent transition">Home</Link>
+            <Link to="/home" className="hover:text-accent transition">Home</Link>
             <Link to="/projects" className="hover:text-accent transition">Projects</Link>
 
             {/* NEW: Admin Dashboard link - Only visible if user role is admin */}
