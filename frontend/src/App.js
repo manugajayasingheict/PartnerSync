@@ -4,6 +4,8 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 // Import ALL your pages
 import Home from './pages/Home';
 import Projects from './pages/Projects';
+import Reports from './pages/Reports';
+import ProjectDetails from './pages/ProjectDetails';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
 import AdminDashboard from './pages/AdminDashboard';
@@ -23,10 +25,19 @@ function App() {
   return (
     <Router>
       <Routes>
+
         <Route path="/" element={<Login />} />
         
         <Route path="/home" element={<Home />} />
         {/* Other Routes */}
+
+        {/* Public Routes */}
+        <Route path="/" element={<Home />} />
+        <Route path="/projects" element={<Projects />} />
+        <Route path="/reports" element={<Reports />} />
+        <Route path="/projects/:id" element={<ProjectDetails />} />
+        <Route path="/login" element={<Login />} />
+
         <Route path="/signup" element={<Signup />} />
         
         <Route path="/projects" element={<Projects />} />
