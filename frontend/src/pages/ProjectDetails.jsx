@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import { FaChartLine, FaDollarSign, FaUsers, FaMoneyBillWave, FaClipboardList, FaTrash, FaEdit, FaTimes, FaSpinner, FaExclamationTriangle, FaCheckCircle, FaPlus } from 'react-icons/fa';
+import { FaChartLine, FaDollarSign, FaUsers, FaMoneyBillWave, FaClipboardList, FaTrash, FaEdit, FaTimes, FaSpinner, FaExclamationTriangle, FaCheckCircle, FaPlus, FaFilePdf } from 'react-icons/fa';
 import axios from 'axios';
+import jsPDF from 'jspdf';
 
 const ProjectDetails = () => {
   const { id } = useParams();
@@ -211,6 +212,137 @@ const ProjectDetails = () => {
     return labels[type] || type;
   };
 
+  // Generate comprehensive PDF report
+  const generateDetailedPDF = () => {
+    const doc = new jsPDF();
+    let yPosition = 20;
+
+    // Header
+    doc.setFillColor(25, 72, 106);
+    doc.rect(0, 0, 210, 45, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(24);
+    doc.text('Project Detailed Report', 20, 25);
+    doc.setFontSize(12);
+    doc.text(new Date().toLocaleDateString(), 20, 35);
+    
+    yPosition = 60;
+    doc.setTextColor(0, 0, 0);
+
+    // Project Information
+    doc.setFontSize(18);
+    doc.setFont(undefined, 'bold');
+    doc.text('Project Information', 20, yPosition);
+    yPosition += 10;
+    
+    doc.setFontSize(11);
+    doc.setFont(undefined, 'normal');
+    doc.text(`Title: ${project.title}`, 20, yPosition);
+    yPosition += 7;
+    doc.text(`Organization: ${project.organization}`, 20, yPosition);
+    yPosition += 7;
+    doc.text(`SDG Goal: ${project.sdgGoal}`, 20, yPosition);
+    yPosition += 7;
+    doc.text(`Status: ${project.status}`, 20, yPosition);
+    yPosition += 10;
+    
+    doc.setFont(undefined, 'bold');
+    doc.text('Description:', 20, yPosition);
+    yPosition += 7;
+    doc.setFont(undefined, 'normal');
+    const descLines = doc.splitTextToSize(project.description, 170);
+    doc.text(descLines, 20, yPosition);
+    yPosition += descLines.length * 5 + 10;
+
+    // Financial Statistics
+    if (yPosition > 250) {
+      doc.addPage();
+      yPosition = 20;
+    }
+    
+    doc.setFontSize(18);
+    doc.setFont(undefined, 'bold');
+    doc.text('Financial Overview', 20, yPosition);
+    yPosition += 10;
+    
+    doc.setFontSize(11);
+    doc.setFont(undefined, 'normal');
+    doc.text(`Total Budget: LKR ${(project.budget || 0).toLocaleString()}`, 20, yPosition);
+    yPosition += 7;
+    doc.text(`Amount Spent: LKR ${(statistics.totalSpent || 0).toLocaleString()}`, 20, yPosition);
+    yPosition += 7;
+    doc.text(`Budget Remaining: LKR ${(statistics.budgetRemaining || 0).toLocaleString()}`, 20, yPosition);
+    yPosition += 7;
+    doc.text(`Budget Utilization: ${budgetUtilization.toFixed(1)}%`, 20, yPosition);
+    yPosition += 7;
+    doc.text(`People Impacted: ${(statistics.totalPeopleImpacted || 0).toLocaleString()}`, 20, yPosition);
+    yPosition += 7;
+    doc.text(`Total Reports: ${statistics.totalReports || 0}`, 20, yPosition);
+    yPosition += 15;
+
+    // Reports Section
+    if (reports.length > 0) {
+      if (yPosition > 250) {
+        doc.addPage();
+        yPosition = 20;
+      }
+      
+      doc.setFontSize(18);
+      doc.setFont(undefined, 'bold');
+      doc.text('Progress Reports', 20, yPosition);
+      yPosition += 10;
+
+      reports.forEach((report, index) => {
+        if (yPosition > 260) {
+          doc.addPage();
+          yPosition = 20;
+        }
+
+        doc.setFontSize(12);
+        doc.setFont(undefined, 'bold');
+        doc.text(`Report #${index + 1} - ${getReportTypeLabel(report.reportType)}`, 20, yPosition);
+        yPosition += 7;
+        
+        doc.setFontSize(10);
+        doc.setFont(undefined, 'normal');
+        doc.text(`Date: ${formatDate(report.reportDate)}`, 20, yPosition);
+        yPosition += 5;
+        doc.text(`Submitted by: ${report.reportedBy?.name} (${report.reportedBy?.organization})`, 20, yPosition);
+        yPosition += 5;
+        
+        if (report.reportType === 'financial' && report.amountLKR) {
+          doc.text(`Amount: LKR ${report.amountLKR.toLocaleString()}`, 20, yPosition);
+          if (report.amountUSD) {
+            doc.text(` (USD $${parseFloat(report.amountUSD).toFixed(2)})`, 70, yPosition);
+          }
+          yPosition += 5;
+        }
+        
+        if (report.reportType === 'people_helped' && report.peopleImpacted) {
+          doc.text(`People Impacted: ${report.peopleImpacted}`, 20, yPosition);
+          yPosition += 5;
+        }
+        
+        doc.setFont(undefined, 'italic');
+        const reportDescLines = doc.splitTextToSize(report.description, 170);
+        doc.text(reportDescLines, 20, yPosition);
+        yPosition += reportDescLines.length * 5 + 8;
+      });
+    }
+
+    // Footer on all pages
+    const pageCount = doc.internal.getNumberOfPages();
+    for (let i = 1; i <= pageCount; i++) {
+      doc.setPage(i);
+      doc.setFontSize(8);
+      doc.setTextColor(128, 128, 128);
+      doc.text(`Page ${i} of ${pageCount}`, 105, 290, { align: 'center' });
+      doc.text('Generated by PartnerSync Platform', 105, 285, { align: 'center' });
+    }
+
+    doc.save(`${project.title}_Detailed_Report.pdf`);
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-neutral flex items-center justify-center">
@@ -275,6 +407,14 @@ const ProjectDetails = () => {
               }`}>
                 {project.status}
               </span>
+              
+              <button 
+                onClick={generateDetailedPDF}
+                className="bg-green-600 text-white px-5 py-2 rounded-lg font-bold flex items-center gap-2 hover:bg-green-700 transition shadow-lg text-sm"
+                title="Download Full Project Report"
+              >
+                <FaFilePdf /> Download PDF
+              </button>
               
               {canSubmitReport && project.status === 'In Progress' && (
                 <button 
