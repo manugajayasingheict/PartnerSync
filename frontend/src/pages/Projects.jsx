@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { FaPlus, FaLeaf, FaEdit, FaTrash, FaTimes, FaDollarSign, FaSearch, FaFilePdf } from 'react-icons/fa';
+import { useNavigate } from 'react-router-dom';
+import { FaPlus, FaLeaf, FaEdit, FaTrash, FaTimes, FaDollarSign, FaSearch, FaFilePdf, FaArrowRight } from 'react-icons/fa';
 import jsPDF from 'jspdf'; // Import PDF Library
 
 const Projects = () => {
+  const navigate = useNavigate();
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -286,6 +288,15 @@ const Projects = () => {
                 {isAdmin && (
                     <button onClick={() => handleDelete(project._id)} className="text-gray-300 hover:text-red-500 transition p-2"><FaTrash /></button>
                 )}
+                
+                {/* View Details Arrow - Everyone can see */}
+                <button 
+                    onClick={() => navigate(`/projects/${project._id}`)} 
+                    className="text-gray-300 hover:text-primary transition p-2"
+                    title="View Details & Reports"
+                >
+                    <FaArrowRight />
+                </button>
               </div>
 
               <div className="flex justify-between items-start mb-4 pr-24"> 

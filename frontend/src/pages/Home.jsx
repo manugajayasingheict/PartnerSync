@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { FaGlobeAsia, FaHandshake, FaCheckCircle, FaSpinner, FaUserCircle, FaSignOutAlt, FaUserShield } from 'react-icons/fa';
+import { FaGlobeAsia, FaHandshake, FaCheckCircle, FaSpinner, FaUserCircle, FaSignOutAlt, FaUserShield, FaBullseye } from 'react-icons/fa';
 
 const Home = () => {
   const [stats, setStats] = useState({
@@ -65,10 +65,19 @@ const Home = () => {
           </div>
           
           <div className="flex items-center space-x-6 font-medium">
-            <Link to="/" className="hover:text-accent transition">Home</Link>
+            <Link to="/home" className="hover:text-accent transition">Home</Link>
             <Link to="/projects" className="hover:text-accent transition">Projects</Link>
 
-            {/* NEW: Admin Dashboard link - Only visible if user role is admin */}
+            
+            {/* SDG Management Link in Navbar */}
+            <Link to="/sdg-management" className="hover:text-accent transition flex items-center gap-1">
+              <FaBullseye /> SDG Targets
+            </Link>
+
+            <Link to="/reports" className="hover:text-accent transition">Reports</Link>
+
+
+            {/* Admin Dashboard link - Only visible if user role is admin */}
             {user?.role === 'admin' && (
               <Link to="/admin" className="text-accent flex items-center gap-1 hover:underline transition">
                 <FaUserShield /> Admin Panel
@@ -94,7 +103,7 @@ const Home = () => {
                 <Link to="/login" className="hover:text-accent transition border border-white px-4 py-1.5 rounded-lg">
                   Login
                 </Link>
-                <Link to="/signup" className="bg-secondary px-5 py-2 rounded-lg font-bold shadow-md hover:bg-blue-600 transition">
+                <Link to="/signup" className="px-5 py-2 rounded-lg font-bold shadow-md transition text-white" style={{ background: '#2980b9' }} onMouseOver={(e) => e.target.style.background = '#1e5a7d'} onMouseOut={(e) => e.target.style.background = '#2980b9'}>
                   Sign Up
                 </Link>
               </div>
@@ -106,17 +115,23 @@ const Home = () => {
       {/* 2. Hero Section */}
       <header className="bg-white py-24">
         <div className="container mx-auto px-6 text-center max-w-4xl">
-          <h1 className="text-6xl font-extrabold text-primary mb-6 leading-tight">
+          <h1 className="text-6xl font-extrabold text-gray-900 mb-6 leading-tight">
             Uniting Partners for <br/>
-            <span className="text-secondary">Sustainable Impact</span>
+            <span style={{ color: '#2980b9' }}>Sustainable Impact</span>
           </h1>
           <p className="text-xl text-gray-600 mb-10 leading-relaxed">
             Track Sri Lanka's progress on UN Sustainable Development Goals. 
             Manage projects, visualize data, and sync with partners in real-time.
           </p>
           <div className="flex justify-center gap-6">
-            <Link to="/projects" className="flex items-center gap-2 bg-primary text-white px-8 py-4 rounded-lg text-lg font-bold hover:bg-opacity-90 transition shadow-xl">
+            {/* Get Started button - Dark blue theme */}
+            <Link to="/sdg-management" className="flex items-center gap-2 text-white px-8 py-4 rounded-lg text-lg font-bold hover:shadow-lg transition shadow-xl" style={{ background: 'linear-gradient(135deg, #1e5a7d 0%, #2980b9 100%)' }}>
               <FaHandshake /> Get Started
+            </Link>
+            
+            {/* Manage SDG Targets Button - Dark blue theme */}
+            <Link to="/sdg-management" className="flex items-center gap-2 text-white px-8 py-4 rounded-lg text-lg font-bold hover:shadow-lg transition shadow-xl" style={{ background: 'linear-gradient(135deg, #2980b9 0%, #3498db 100%)' }}>
+              <FaBullseye /> Manage SDG Targets
             </Link>
           </div>
         </div>
@@ -126,19 +141,19 @@ const Home = () => {
       <section className="py-20">
         <div className="container mx-auto px-6">
           <div className="text-center mb-16">
-            <h2 className="text-3xl font-bold text-primary mb-4">Live Project Overview</h2>
-            <div className="w-24 h-1 bg-accent mx-auto rounded"></div>
+            <h2 className="text-3xl font-bold text-gray-900 mb-4">Live Project Overview</h2>
+            <div className="w-24 h-1 mx-auto rounded" style={{ backgroundColor: '#2980b9' }}></div>
           </div>
           
           <div className="grid md:grid-cols-3 gap-8">
             
             {/* Card 1: Total Projects */}
-            <div className="bg-white p-8 rounded-2xl shadow-sm border-t-4 border-blue-500 hover:shadow-xl transition text-center">
-              <div className="bg-blue-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                 <FaGlobeAsia className="text-blue-600 text-3xl"/>
+            <div className="bg-white p-8 rounded-2xl shadow-sm hover:shadow-xl transition text-center" style={{ borderTop: '4px solid #2980b9' }}>
+              <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4" style={{ backgroundColor: '#f0f8ff' }}>
+                 <FaGlobeAsia className="text-3xl" style={{ color: '#1e5a7d' }}/>
               </div>
               <h3 className="text-gray-500 font-bold uppercase tracking-wider mb-2">Total Projects</h3>
-              <p className="text-5xl font-extrabold text-primary">
+              <p className="text-5xl font-extrabold" style={{ color: '#1e5a7d' }}>
                 {loading ? <FaSpinner className="animate-spin inline text-2xl"/> : stats.total}
               </p>
             </div>
