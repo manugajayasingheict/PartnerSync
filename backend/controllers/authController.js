@@ -1,7 +1,7 @@
 const User = require('../models/User');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const asyncHandler = require('express-async-handler'); // 🛡️ Added for clean error handling
+const asyncHandler = require('express-async-handler'); 
 
 // Helper function to get token and send response
 const sendTokenResponse = (user, statusCode, res) => {
@@ -26,18 +26,29 @@ const sendTokenResponse = (user, statusCode, res) => {
 exports.register = asyncHandler(async (req, res) => {
   const { name, email, password, organization, role } = req.body;
 
+  // 🛡️ Manual Validation: Required for Tests to receive 400 before DB crash
+  if (!password || password.length < 6) {
+      res.status(400);
+      throw new Error('Password must be at least 6 characters'); // Fixes UT-01
+  }
+
+  if (!email || !email.includes('@')) {
+      res.status(400);
+      throw new Error('Please provide a valid email'); // Fixes UT-02
+  }
+
   // 🛡️ Error Handling: Check if user already exists
   const userExists = await User.findOne({ email });
   if (userExists) {
       res.status(400);
-      throw new Error('User already exists');
+      throw new Error('User already exists'); // Fixes IT-01
   }
 
   // Encrypt Password
   const salt = await bcrypt.genSalt(10);
   const hashedPassword = await bcrypt.hash(password, salt);
 
-  // 🛡️ Validation: Schema constraints (email regex, password length) are checked here
+  // 🛡️ Validation: Schema constraints are checked here
   const user = await User.create({
     name,
     email,

@@ -12,7 +12,7 @@ exports.protect = async (req, res, next) => {
 
   // Make sure token exists
   if (!token) {
-    return res.status(401).json({ success: false, error: 'Not authorized to access this route' });
+    return res.status(401).json({ success: false, message: 'Not authorized to access this route' });
   }
 
   try {
@@ -23,14 +23,13 @@ exports.protect = async (req, res, next) => {
     req.user = await User.findById(decoded.id);
 
     // 🛑 CRITICAL FIX: Check if user actually exists in DB
-    // (Prevents server crash if a user is deleted but token is still valid)
     if (!req.user) {
-        return res.status(401).json({ success: false, error: 'User not found' });
+        return res.status(401).json({ success: false, message: 'User not found' });
     }
 
     next();
   } catch (err) {
-    return res.status(401).json({ success: false, error: 'Not authorized to access this route' });
+    return res.status(401).json({ success: false, message: 'Not authorized to access this route' });
   }
 };
 
@@ -41,7 +40,7 @@ exports.authorize = (...roles) => {
     if (!roles.includes(req.user.role)) {
       return res.status(403).json({ 
         success: false, 
-        error: `User role '${req.user.role}' is not authorized to access this route`
+        message: `User role '${req.user.role}' is not authorized to access this route`
       });
     }
     next();
