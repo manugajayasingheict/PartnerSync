@@ -6,13 +6,13 @@
 .sdg-dropdown-label {
   display: block;
   margin-bottom: 0.5rem;
-  color: #1e5a7d; /* Navbar primary color */
+  color: #1a5b80; /* Navbar primary color */
   font-weight: 600;
   font-size: 0.95rem;
 }
 
 .sdg-dropdown-label .required {
-  color: #e74c3c;
+  color: #f14f3c;
 }
 
 .sdg-dropdown-select {
@@ -27,7 +27,7 @@
 }
 
 .sdg-dropdown-select:hover {
-  border-color: #1e5a7d; /* Navbar primary color */
+  border-color: #1b628a; /* Navbar primary color */
 }
 
 .sdg-dropdown-select:focus {
