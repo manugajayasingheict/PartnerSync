@@ -7,31 +7,25 @@ const mongoose = require('mongoose');
 describe('Member 03: Project Registry & Statistics', () => {
     let token;
 
-    // 🛡️ Setup: Register and PROMOTE user before running tests
+    // 🛡️ Setup: Log in as your actual Admin before running tests
     beforeAll(async () => {
-        await User.deleteMany({ email: 'tester@partnersync.com' });
-        
-        // 1. Register the user
         const res = await request(app)
-            .post('/api/auth/register')
+            .post('/api/auth/login')
             .send({
-                name: "Test User",
-                email: "tester@partnersync.com",
-                password: "password123",
-                organization: "Test Org"
+                email: "admin@gmail.com", // Your verified admin
+                password: "admin123"      // Your verified password
             });
         
         token = res.body.token; 
-        const userId = res.body.user.id;
-
-        // 2. 🛑 CRITICAL: Manually promote user to 'partner' role in DB
-        // This prevents the 403 Forbidden error from the authorize middleware
-        await User.findByIdAndUpdate(userId, { role: 'partner', isVerified: true });
+        
+        if (!token) {
+            throw new Error("Test Setup Failed: Could not log in as admin. Check credentials.");
+        }
     });
 
     // Cleanup after all tests finish
     afterAll(async () => {
-        await User.deleteMany({ email: 'tester@partnersync.com' });
+        // Only close the connection; no need to delete the admin user!
         await mongoose.connection.close();
     });
 
