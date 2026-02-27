@@ -218,6 +218,24 @@ const getSingleProjectStatistics = asyncHandler(async (req, res) => {
                         then: { $multiply: [{ $divide: ['$totalSpent', '$budget'] }, 100] },
                         else: 0
                     }
+                },
+                isOverBudget: {
+                    $cond: {
+                        if: { $gt: [{ $ifNull: ['$budget', 0] }, 0] },
+                        then: { $gt: ['$totalSpent', '$budget'] },
+                        else: false
+                    }
+                }
+            }
+        },
+        {
+            $addFields: {
+                warningLevel: {
+                    $cond: {
+                        if: { $gte: ['$budgetUtilization', 100] },
+                        then: 'danger',
+                        else: { $cond: { if: { $gte: ['$budgetUtilization', 80] }, then: 'warning', else: null } }
+                    }
                 }
             }
         },
