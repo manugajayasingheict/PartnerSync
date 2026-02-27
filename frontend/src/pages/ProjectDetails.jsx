@@ -1,0 +1,891 @@
+import React, { useState, useEffect } from 'react';
+import { useParams } from 'react-router-dom';
+import { FaChartLine, FaDollarSign, FaUsers, FaMoneyBillWave, FaClipboardList, FaTrash, FaEdit, FaTimes, FaSpinner, FaExclamationTriangle, FaCheckCircle, FaPlus, FaFilePdf } from 'react-icons/fa';
+import axios from 'axios';
+import jsPDF from 'jspdf';
+
+const ProjectDetails = () => {
+  const { id } = useParams();
+  
+  const [project, setProject] = useState(null);
+  const [statistics, setStatistics] = useState(null);
+  const [reports, setReports] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [user, setUser] = useState(null);
+  
+  const [formErrors, setFormErrors] = useState({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  // Report submission state
+  const [showForm, setShowForm] = useState(false);
+  const [formData, setFormData] = useState({
+    reportType: 'financial',
+    amountLKR: '',
+    peopleImpacted: '',
+    description: ''
+  });
+  
+  // Edit state
+  const [editingReport, setEditingReport] = useState(null);
+  const [editForm, setEditForm] = useState({
+    reportType: '',
+    amountLKR: '',
+    peopleImpacted: '',
+    description: ''
+  });
+
+  useEffect(() => {
+    const savedUser = localStorage.getItem('user');
+    if (savedUser) {
+      setUser(JSON.parse(savedUser));
+    }
+    fetchProjectData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id]);
+
+  const fetchProjectData = async () => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      // Parallel API calls
+      const [projectRes, statsRes, reportsRes] = await Promise.all([
+        axios.get(`http://localhost:5000/api/projects/${id}`),
+        axios.get(`http://localhost:5000/api/projects/${id}/statistics`),
+        axios.get(`http://localhost:5000/api/reports/project/${id}`)
+      ]);
+
+      if (projectRes.data.success) setProject(projectRes.data.data);
+      if (statsRes.data.success) setStatistics(statsRes.data.data);
+      if (reportsRes.data.success) setReports(reportsRes.data.data);
+    } catch (err) {
+      console.error('Error fetching project data:', err);
+      setError(err.response?.data?.error || 'Failed to load project details');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const canSubmitReport = user?.role === 'admin' || user?.role === 'partner' || user?.role === 'government';
+
+  // Client-side form validation
+  const validateForm = () => {
+    const errors = {};
+    
+    if (!formData.description || formData.description.trim() === '') {
+      errors.description = 'Description is required';
+    } else if (formData.description.length > 500) {
+      errors.description = 'Description must be 500 characters or less';
+    }
+    
+    if (formData.reportType === 'financial') {
+      if (!formData.amountLKR || formData.amountLKR <= 0) {
+        errors.amountLKR = 'Please enter a positive amount';
+      }
+    }
+    
+    if (formData.reportType === 'people_helped') {
+      if (!formData.peopleImpacted || formData.peopleImpacted < 1) {
+        errors.peopleImpacted = 'Please enter at least 1 person';
+      }
+      if (formData.peopleImpacted && !Number.isInteger(Number(formData.peopleImpacted))) {
+        errors.peopleImpacted = 'Must be a whole number';
+      }
+    }
+    
+    setFormErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    
+    // Validate before submitting
+    if (!validateForm()) {
+      alert('Please fix the errors in the form');
+      return;
+    }
+    
+    setIsSubmitting(true);
+    
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.post(
+        'http://localhost:5000/api/reports/submit',
+        { ...formData, project: id },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      if (response.data.success) {
+        alert(response.data.message + (response.data.warning ? ` (${response.data.warning})` : ''));
+        resetForm();
+        fetchProjectData(); // Refresh all data
+      }
+    } catch (error) {
+      const errorMsg = Array.isArray(error.response?.data?.error) 
+        ? error.response.data.error.join(', ')
+        : error.response?.data?.error || 'Failed to submit report';
+      alert(errorMsg);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const resetForm = () => {
+    setFormData({
+      reportType: 'financial',
+      amountLKR: '',
+      peopleImpacted: '',
+      description: ''
+    });
+    setShowForm(false);
+  };
+
+  const handleDeleteReport = async (reportId) => {
+    if (!window.confirm('Are you sure you want to delete this report? This action cannot be undone.')) return;
+
+    try {
+      const token = localStorage.getItem('token');
+      await axios.delete(
+        `http://localhost:5000/api/reports/remove/${reportId}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      
+      alert('Report deleted successfully');
+      fetchProjectData(); // Refresh data
+    } catch (error) {
+      const errorMsg = error.response?.data?.error || 'Failed to delete report';
+      alert(errorMsg);
+    }
+  };
+
+  const handleEditClick = (report) => {
+    setEditingReport(report._id);
+    setEditForm({
+      reportType: report.reportType,
+      amountLKR: report.amountLKR || '',
+      peopleImpacted: report.peopleImpacted || '',
+      description: report.description
+    });
+  };
+
+  const handleCancelEdit = () => {
+    setEditingReport(null);
+    setEditForm({
+      reportType: '',
+      amountLKR: '',
+      peopleImpacted: '',
+      description: ''
+    });
+  };
+
+  const handleUpdateReport = async (reportId) => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.put(
+        `http://localhost:5000/api/reports/update/${reportId}`,
+        editForm,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      
+      if (response.data.success) {
+        alert('Report updated successfully');
+        setEditingReport(null);
+        fetchProjectData(); // Refresh data
+      }
+    } catch (error) {
+      const errorMsg = Array.isArray(error.response?.data?.error)
+        ? error.response.data.error.join(', ')
+        : error.response?.data?.error || 'Failed to update report';
+      alert(errorMsg);
+    }
+  };
+
+  const canEditOrDelete = (report) => {
+    if (!user) {
+      console.log('No user logged in');
+      return false;
+    }
+    
+    console.log('Authorization Check:');
+    console.log('User:', user);
+    console.log('User ID from localStorage:', user._id || user.id);
+    console.log('User Role:', user.role);
+    console.log('Report Author ID:', report.reportedBy?._id);
+    console.log('Report Author Name:', report.reportedBy?.name);
+    
+    // Admin can edit/delete any report
+    if (user.role === 'admin') {
+      console.log('User is admin - access granted');
+      return true;
+    }
+    
+    // Owner can edit/delete their own report
+    // Backend sends user.id (not user._id) in localStorage
+    const userId = user._id || user.id;
+    const reportAuthorId = report.reportedBy?._id;
+    const isOwner = reportAuthorId?.toString() === userId?.toString();
+    console.log('ID Match:', isOwner, `(${reportAuthorId} === ${userId})`);
+    
+    return isOwner;
+  };
+
+  const formatDate = (date) => {
+    return new Date(date).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
+  const getReportTypeColor = (type) => {
+    const colors = {
+      financial: 'bg-green-100 text-green-700 border-green-300',
+      people_helped: 'bg-blue-100 text-blue-700 border-blue-300',
+      milestone: 'bg-purple-100 text-purple-700 border-purple-300',
+      other: 'bg-gray-100 text-gray-700 border-gray-300'
+    };
+    return colors[type] || colors.other;
+  };
+
+  const getReportTypeLabel = (type) => {
+    const labels = {
+      financial: 'Financial',
+      people_helped: 'People Helped',
+      milestone: 'Milestone',
+      other: 'Other'
+    };
+    return labels[type] || type;
+  };
+
+  // Generate comprehensive PDF report
+  const generateDetailedPDF = () => {
+    const doc = new jsPDF();
+    let yPosition = 20;
+
+    // Header
+    doc.setFillColor(25, 72, 106);
+    doc.rect(0, 0, 210, 45, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(24);
+    doc.text('Project Detailed Report', 20, 25);
+    doc.setFontSize(12);
+    doc.text(new Date().toLocaleDateString(), 20, 35);
+    
+    yPosition = 60;
+    doc.setTextColor(0, 0, 0);
+
+    // Project Information
+    doc.setFontSize(18);
+    doc.setFont(undefined, 'bold');
+    doc.text('Project Information', 20, yPosition);
+    yPosition += 10;
+    
+    doc.setFontSize(11);
+    doc.setFont(undefined, 'normal');
+    doc.text(`Title: ${project.title}`, 20, yPosition);
+    yPosition += 7;
+    doc.text(`Organization: ${project.organization}`, 20, yPosition);
+    yPosition += 7;
+    doc.text(`SDG Goal: ${project.sdgGoal}`, 20, yPosition);
+    yPosition += 7;
+    doc.text(`Status: ${project.status}`, 20, yPosition);
+    yPosition += 10;
+    
+    doc.setFont(undefined, 'bold');
+    doc.text('Description:', 20, yPosition);
+    yPosition += 7;
+    doc.setFont(undefined, 'normal');
+    const descLines = doc.splitTextToSize(project.description, 170);
+    doc.text(descLines, 20, yPosition);
+    yPosition += descLines.length * 5 + 10;
+
+    // Financial Statistics
+    if (yPosition > 250) {
+      doc.addPage();
+      yPosition = 20;
+    }
+    
+    doc.setFontSize(18);
+    doc.setFont(undefined, 'bold');
+    doc.text('Financial Overview', 20, yPosition);
+    yPosition += 10;
+    
+    doc.setFontSize(11);
+    doc.setFont(undefined, 'normal');
+    doc.text(`Total Budget: LKR ${(project.budget || 0).toLocaleString()}`, 20, yPosition);
+    yPosition += 7;
+    doc.text(`Amount Spent: LKR ${(statistics.totalSpent || 0).toLocaleString()}`, 20, yPosition);
+    yPosition += 7;
+    doc.text(`Budget Remaining: LKR ${(statistics.budgetRemaining || 0).toLocaleString()}`, 20, yPosition);
+    yPosition += 7;
+    doc.text(`Budget Utilization: ${budgetUtilization.toFixed(1)}%`, 20, yPosition);
+    yPosition += 7;
+    doc.text(`People Impacted: ${(statistics.totalPeopleImpacted || 0).toLocaleString()}`, 20, yPosition);
+    yPosition += 7;
+    doc.text(`Total Reports: ${statistics.totalReports || 0}`, 20, yPosition);
+    yPosition += 15;
+
+    // Reports Section
+    if (reports.length > 0) {
+      if (yPosition > 250) {
+        doc.addPage();
+        yPosition = 20;
+      }
+      
+      doc.setFontSize(18);
+      doc.setFont(undefined, 'bold');
+      doc.text('Progress Reports', 20, yPosition);
+      yPosition += 10;
+
+      reports.forEach((report, index) => {
+        if (yPosition > 260) {
+          doc.addPage();
+          yPosition = 20;
+        }
+
+        doc.setFontSize(12);
+        doc.setFont(undefined, 'bold');
+        doc.text(`Report #${index + 1} - ${getReportTypeLabel(report.reportType)}`, 20, yPosition);
+        yPosition += 7;
+        
+        doc.setFontSize(10);
+        doc.setFont(undefined, 'normal');
+        doc.text(`Date: ${formatDate(report.reportDate)}`, 20, yPosition);
+        yPosition += 5;
+        doc.text(`Submitted by: ${report.reportedBy?.name} (${report.reportedBy?.organization})`, 20, yPosition);
+        yPosition += 5;
+        
+        if (report.reportType === 'financial' && report.amountLKR) {
+          doc.text(`Amount: LKR ${report.amountLKR.toLocaleString()}`, 20, yPosition);
+          if (report.amountUSD) {
+            doc.text(` (USD $${parseFloat(report.amountUSD).toFixed(2)})`, 70, yPosition);
+          }
+          yPosition += 5;
+        }
+        
+        if (report.reportType === 'people_helped' && report.peopleImpacted) {
+          doc.text(`People Impacted: ${report.peopleImpacted}`, 20, yPosition);
+          yPosition += 5;
+        }
+        
+        doc.setFont(undefined, 'italic');
+        const reportDescLines = doc.splitTextToSize(report.description, 170);
+        doc.text(reportDescLines, 20, yPosition);
+        yPosition += reportDescLines.length * 5 + 8;
+      });
+    }
+
+    // Footer on all pages
+    const pageCount = doc.internal.getNumberOfPages();
+    for (let i = 1; i <= pageCount; i++) {
+      doc.setPage(i);
+      doc.setFontSize(8);
+      doc.setTextColor(128, 128, 128);
+      doc.text(`Page ${i} of ${pageCount}`, 105, 290, { align: 'center' });
+      doc.text('Generated by PartnerSync Platform', 105, 285, { align: 'center' });
+    }
+
+    doc.save(`${project.title}_Detailed_Report.pdf`);
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-neutral flex items-center justify-center">
+        <div className="text-center">
+          <FaSpinner className="animate-spin text-5xl text-primary mx-auto mb-4" />
+          <p className="text-gray-500 text-xl">Loading project details...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-neutral p-8">
+        <div className="max-w-4xl mx-auto bg-white p-8 rounded-xl shadow-md text-center">
+          <FaExclamationTriangle className="text-5xl text-red-500 mx-auto mb-4" />
+          <h2 className="text-2xl font-bold text-gray-800 mb-4">Error Loading Project</h2>
+          <p className="text-gray-600 mb-6">{error}</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!project || !statistics) {
+    return (
+      <div className="min-h-screen bg-neutral p-8">
+        <div className="max-w-4xl mx-auto bg-white p-8 rounded-xl shadow-md text-center">
+          <h2 className="text-2xl font-bold text-gray-800 mb-4">Project Not Found</h2>
+        </div>
+      </div>
+    );
+  }
+
+  const budgetUtilization = statistics.budgetUtilization || 0;
+  const warningLevel = statistics.warningLevel;
+
+  return (
+    <div className="min-h-screen bg-neutral p-8 font-sans">
+      {/* Header */}
+      <div className="max-w-7xl mx-auto mb-6">
+        <div className="bg-white p-6 rounded-xl shadow-md">
+          <div className="flex justify-between items-start">
+            <div>
+              <h1 className="text-3xl font-bold text-primary mb-2">{project.title}</h1>
+              <p className="text-gray-600 mb-2">{project.description}</p>
+              <div className="flex gap-4 text-sm">
+                <span className="text-gray-500">
+                  <strong>Organization:</strong> {project.organization}
+                </span>
+                <span className="text-gray-500">
+                  <strong>SDG Goal:</strong> {project.sdgGoal}
+                </span>
+              </div>
+            </div>
+            
+            <div className="flex items-center gap-3">
+              <span className={`px-4 py-2 rounded-full text-sm font-bold border ${
+                project.status === 'Completed' ? 'bg-green-100 text-green-700 border-green-300' :
+                project.status === 'In Progress' ? 'bg-blue-100 text-blue-700 border-blue-300' :
+                project.status === 'Cancelled' ? 'bg-red-100 text-red-700 border-red-300' :
+                'bg-yellow-100 text-yellow-800 border-yellow-300'
+              }`}>
+                {project.status}
+              </span>
+              
+              <button 
+                onClick={generateDetailedPDF}
+                className="bg-green-600 text-white px-5 py-2 rounded-lg font-bold flex items-center gap-2 hover:bg-green-700 transition shadow-lg text-sm"
+                title="Download Full Project Report"
+              >
+                <FaFilePdf /> Download PDF
+              </button>
+              
+              {canSubmitReport && project.status === 'In Progress' && (
+                <button 
+                  onClick={() => { if (showForm) resetForm(); else setShowForm(true); }}
+                  className={`${showForm ? 'bg-red-500' : 'bg-secondary'} text-white px-5 py-2 rounded-lg font-bold flex items-center gap-2 hover:opacity-90 transition shadow-lg text-sm`}
+                >
+                  {showForm ? <><FaTimes /> Close</> : <><FaPlus /> Submit Report</>}
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Report Submission Form */}
+      {showForm && (
+        <div className="max-w-7xl mx-auto bg-white p-8 rounded-xl shadow-md mb-10 border-t-4 border-secondary animate-fade-in">
+          <h2 className="text-2xl font-bold text-gray-800 mb-6">Submit Progress Report for {project.title}</h2>
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-2">Report Type</label>
+                <select 
+                  className="w-full p-3 border rounded-lg"
+                  value={formData.reportType}
+                  onChange={(e) => setFormData({...formData, reportType: e.target.value})}
+                >
+                  <option value="financial">Financial Report</option>
+                  <option value="people_helped">People Impacted</option>
+                  <option value="milestone">Milestone Achievement</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
+
+              {formData.reportType === 'financial' && (
+                <div>
+                  <label className="block text-sm font-bold text-gray-700 mb-2">Amount Spent (LKR) *</label>
+                  <input 
+                    type="number" 
+                    className={`w-full p-3 border rounded-lg ${
+                      formErrors.amountLKR ? 'border-red-500 bg-red-50' : 'border-gray-300'
+                    }`}
+                    placeholder="50000"
+                    min="0"
+                    step="0.01"
+                    value={formData.amountLKR}
+                    onChange={(e) => {
+                      setFormData({...formData, amountLKR: e.target.value});
+                      if (formErrors.amountLKR) setFormErrors({...formErrors, amountLKR: ''});
+                    }}
+                    required={formData.reportType === 'financial'}
+                  />
+                  {formErrors.amountLKR && (
+                    <p className="text-red-600 text-xs mt-1 flex items-center gap-1">
+                      <FaExclamationTriangle /> {formErrors.amountLKR}
+                    </p>
+                  )}
+                  <p className="text-xs text-gray-400 mt-1">USD conversion will be automatic</p>
+                </div>
+              )}
+
+              {formData.reportType === 'people_helped' && (
+                <div>
+                  <label className="block text-sm font-bold text-gray-700 mb-2">Number of People *</label>
+                  <input 
+                    type="number" 
+                    className={`w-full p-3 border rounded-lg ${
+                      formErrors.peopleImpacted ? 'border-red-500 bg-red-50' : 'border-gray-300'
+                    }`}
+                    placeholder="150"
+                    min="1"
+                    step="1"
+                    value={formData.peopleImpacted}
+                    onChange={(e) => {
+                      setFormData({...formData, peopleImpacted: e.target.value});
+                      if (formErrors.peopleImpacted) setFormErrors({...formErrors, peopleImpacted: ''});
+                    }}
+                    required={formData.reportType === 'people_helped'}
+                  />
+                  {formErrors.peopleImpacted && (
+                    <p className="text-red-600 text-xs mt-1 flex items-center gap-1">
+                      <FaExclamationTriangle /> {formErrors.peopleImpacted}
+                    </p>
+                  )}
+                </div>
+              )}
+
+              <div className="col-span-2">
+                <label className="block text-sm font-bold text-gray-700 mb-2">
+                  Description * 
+                  <span className="text-gray-400 font-normal ml-2">
+                    ({formData.description.length}/500)
+                  </span>
+                </label>
+                <textarea 
+                  className={`w-full p-3 border rounded-lg h-24 ${
+                    formErrors.description ? 'border-red-500 bg-red-50' : 'border-gray-300'
+                  }`}
+                  placeholder="Describe the progress or impact..."
+                  maxLength="500"
+                  value={formData.description}
+                  onChange={(e) => {
+                    setFormData({...formData, description: e.target.value});
+                    if (formErrors.description) setFormErrors({...formErrors, description: ''});
+                  }}
+                  required
+                ></textarea>
+                {formErrors.description && (
+                  <p className="text-red-600 text-xs mt-1 flex items-center gap-1">
+                    <FaExclamationTriangle /> {formErrors.description}
+                  </p>
+                )}
+              </div>
+            </div>
+
+            <button 
+              type="submit"
+              disabled={isSubmitting}
+              className={`w-full font-bold py-3 rounded-lg transition shadow-lg flex items-center justify-center gap-2 ${
+                isSubmitting 
+                  ? 'bg-gray-400 cursor-not-allowed' 
+                  : 'bg-primary text-white hover:bg-gray-800'
+              }`}
+            >
+              {isSubmitting ? (
+                <><FaSpinner className="animate-spin" /> Submitting...</>
+              ) : (
+                'Submit Report'
+              )}
+            </button>
+          </form>
+        </div>
+      )}
+
+      {/* Dashboard - 4 Tiles */}
+      <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-6 mb-10">
+        {/* Budget Tile */}
+        <div className="bg-white p-6 rounded-xl shadow-sm border-t-4 border-green-500 hover:shadow-xl transition">
+          <div className="bg-green-100 w-14 h-14 rounded-full flex items-center justify-center mb-4">
+            <FaDollarSign className="text-green-600 text-2xl" />
+          </div>
+          <h3 className="text-gray-500 font-bold uppercase text-xs mb-2">Total Budget</h3>
+          <p className="text-3xl font-extrabold text-primary">
+            {(project.budget || 0).toLocaleString()}
+          </p>
+          <p className="text-xs text-gray-400 mt-1">LKR</p>
+        </div>
+
+        {/* Spent Tile */}
+        <div className="bg-white p-6 rounded-xl shadow-sm border-t-4 border-red-500 hover:shadow-xl transition">
+          <div className="bg-red-100 w-14 h-14 rounded-full flex items-center justify-center mb-4">
+            <FaMoneyBillWave className="text-red-600 text-2xl" />
+          </div>
+          <h3 className="text-gray-500 font-bold uppercase text-xs mb-2">Amount Spent</h3>
+          <p className="text-3xl font-extrabold text-primary">
+            {(statistics.totalSpent || 0).toLocaleString()}
+          </p>
+          <p className="text-xs text-gray-400 mt-1">LKR</p>
+        </div>
+
+        {/* Remaining Tile */}
+        <div className="bg-white p-6 rounded-xl shadow-sm border-t-4 border-blue-500 hover:shadow-xl transition">
+          <div className="bg-blue-100 w-14 h-14 rounded-full flex items-center justify-center mb-4">
+            <FaChartLine className="text-blue-600 text-2xl" />
+          </div>
+          <h3 className="text-gray-500 font-bold uppercase text-xs mb-2">Budget Remaining</h3>
+          <p className="text-3xl font-extrabold text-primary">
+            {(statistics.budgetRemaining || 0).toLocaleString()}
+          </p>
+          <p className="text-xs text-gray-400 mt-1">LKR</p>
+        </div>
+
+        {/* People Impacted Tile */}
+        <div className="bg-white p-6 rounded-xl shadow-sm border-t-4 border-purple-500 hover:shadow-xl transition">
+          <div className="bg-purple-100 w-14 h-14 rounded-full flex items-center justify-center mb-4">
+            <FaUsers className="text-purple-600 text-2xl" />
+          </div>
+          <h3 className="text-gray-500 font-bold uppercase text-xs mb-2">People Impacted</h3>
+          <p className="text-3xl font-extrabold text-primary">
+            {(statistics.totalPeopleImpacted || 0).toLocaleString()}
+          </p>
+          <p className="text-xs text-gray-400 mt-1">Total</p>
+        </div>
+      </div>
+
+      {/* Budget Progress Visualization */}
+      <div className="max-w-7xl mx-auto bg-white p-8 rounded-xl shadow-md mb-10">
+        <h2 className="text-2xl font-bold text-primary mb-6">Budget Utilization</h2>
+        
+        {/* Progress Bar */}
+        <div className="mb-6">
+          <div className="flex justify-between items-center mb-2">
+            <span className="text-sm font-bold text-gray-700">Progress</span>
+            <span className={`text-sm font-bold ${
+              warningLevel === 'danger' ? 'text-red-600' :
+              warningLevel === 'warning' ? 'text-yellow-600' :
+              'text-green-600'
+            }`}>
+              {budgetUtilization.toFixed(1)}%
+            </span>
+          </div>
+          
+          <div className="w-full bg-gray-200 rounded-full h-6 overflow-hidden">
+            <div
+              className={`h-full transition-all duration-500 ${
+                warningLevel === 'danger' ? 'bg-red-500' :
+                warningLevel === 'warning' ? 'bg-yellow-500' :
+                'bg-green-500'
+              }`}
+              style={{ width: `${Math.min(budgetUtilization, 100)}%` }}
+            ></div>
+          </div>
+        </div>
+
+        {/* Financial Summary */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+          <div>
+            <p className="text-sm text-gray-500 mb-1">Planned Budget</p>
+            <p className="text-2xl font-bold text-gray-800">{(project.budget || 0).toLocaleString()} LKR</p>
+          </div>
+          <div>
+            <p className="text-sm text-gray-500 mb-1">Amount Spent</p>
+            <p className="text-2xl font-bold text-gray-800">{(statistics.totalSpent || 0).toLocaleString()} LKR</p>
+          </div>
+          <div>
+            <p className="text-sm text-gray-500 mb-1">Remaining</p>
+            <p className="text-2xl font-bold text-gray-800">{(statistics.budgetRemaining || 0).toLocaleString()} LKR</p>
+          </div>
+        </div>
+
+        {/* Warning Messages */}
+        {warningLevel === 'danger' && (
+          <div className="bg-red-100 border-l-4 border-red-500 p-4 rounded">
+            <div className="flex items-center gap-2 text-red-700">
+              <FaExclamationTriangle className="text-xl" />
+              <strong>Alert:</strong> Project is over budget! Immediate review required.
+            </div>
+          </div>
+        )}
+        
+        {warningLevel === 'warning' && !statistics.isOverBudget && (
+          <div className="bg-yellow-100 border-l-4 border-yellow-500 p-4 rounded">
+            <div className="flex items-center gap-2 text-yellow-700">
+              <FaExclamationTriangle className="text-xl" />
+              <strong>Warning:</strong> Budget utilization above 80%. Monitor spending carefully.
+            </div>
+          </div>
+        )}
+        
+        {!warningLevel && (
+          <div className="bg-green-100 border-l-4 border-green-500 p-4 rounded">
+            <div className="flex items-center gap-2 text-green-700">
+              <FaCheckCircle className="text-xl" />
+              <strong>On Track:</strong> Budget utilization is healthy.
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Reports Timeline */}
+      <div className="max-w-7xl mx-auto bg-white p-8 rounded-xl shadow-md">
+        <h2 className="text-2xl font-bold text-primary mb-6 flex items-center gap-2">
+          <FaClipboardList /> Reports Timeline
+        </h2>
+        
+        <p className="text-sm text-gray-500 mb-6">
+          Total Reports: {statistics.totalReports || 0}
+        </p>
+
+        {reports.length === 0 ? (
+          <div className="text-center py-20 text-gray-400">
+            <FaClipboardList className="text-5xl mx-auto mb-4 opacity-50" />
+            <p>No reports yet for this project</p>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {reports.map(report => (
+              <div key={report._id} className="border rounded-lg p-6 hover:shadow-md transition bg-gray-50">
+                {editingReport === report._id ? (
+                  /* EDIT MODE */
+                  <div className="space-y-4">
+                    <div className="flex justify-between items-center mb-4">
+                      <h3 className="text-lg font-bold text-primary">Edit Report</h3>
+                      <button
+                        onClick={handleCancelEdit}
+                        className="text-gray-500 hover:text-gray-700"
+                      >
+                        <FaTimes />
+                      </button>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-bold text-gray-700 mb-2">Report Type</label>
+                      <select
+                        className="w-full p-3 border rounded-lg"
+                        value={editForm.reportType}
+                        onChange={(e) => setEditForm({...editForm, reportType: e.target.value})}
+                      >
+                        <option value="financial">Financial</option>
+                        <option value="people_helped">People Impacted</option>
+                        <option value="milestone">Milestone Achievement</option>
+                        <option value="other">Other</option>
+                      </select>
+                    </div>
+
+                    {editForm.reportType === 'financial' && (
+                      <div>
+                        <label className="block text-sm font-bold text-gray-700 mb-2">Amount (LKR)</label>
+                        <input
+                          type="number"
+                          className="w-full p-3 border rounded-lg"
+                          value={editForm.amountLKR}
+                          onChange={(e) => setEditForm({...editForm, amountLKR: e.target.value})}
+                        />
+                      </div>
+                    )}
+
+                    {editForm.reportType === 'people_helped' && (
+                      <div>
+                        <label className="block text-sm font-bold text-gray-700 mb-2">People Impacted</label>
+                        <input
+                          type="number"
+                          className="w-full p-3 border rounded-lg"
+                          value={editForm.peopleImpacted}
+                          onChange={(e) => setEditForm({...editForm, peopleImpacted: e.target.value})}
+                        />
+                      </div>
+                    )}
+
+                    <div>
+                      <label className="block text-sm font-bold text-gray-700 mb-2">Description</label>
+                      <textarea
+                        className="w-full p-3 border rounded-lg h-24"
+                        value={editForm.description}
+                        onChange={(e) => setEditForm({...editForm, description: e.target.value})}
+                      />
+                    </div>
+
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => handleUpdateReport(report._id)}
+                        className="bg-primary text-white px-6 py-2 rounded-lg font-bold hover:bg-gray-800 transition"
+                      >
+                        Save Changes
+                      </button>
+                      <button
+                        onClick={handleCancelEdit}
+                        className="bg-gray-200 text-gray-700 px-6 py-2 rounded-lg font-bold hover:bg-gray-300 transition"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  /* VIEW MODE */
+                  <>
+                    <div className="flex justify-between items-start mb-3">
+                      <div className="flex items-center gap-3">
+                        <span className={`px-3 py-1 rounded-full text-xs font-bold border ${getReportTypeColor(report.reportType)}`}>
+                          {getReportTypeLabel(report.reportType)}
+                        </span>
+                        <span className="text-sm text-gray-500">{formatDate(report.reportDate)}</span>
+                      </div>
+                      
+                      {canEditOrDelete(report) && (
+                        <div className="flex gap-2">
+                          <button 
+                            onClick={() => handleEditClick(report)}
+                            className="text-blue-500 hover:text-blue-700 transition"
+                            title="Edit report"
+                          >
+                            <FaEdit />
+                          </button>
+                          <button 
+                            onClick={() => handleDeleteReport(report._id)}
+                            className="text-red-500 hover:text-red-700 transition"
+                            title="Delete report"
+                          >
+                            <FaTrash />
+                          </button>
+                        </div>
+                      )}
+                    </div>
+
+                    <p className="text-gray-700 mb-3">{report.description}</p>
+
+                    <div className="flex flex-wrap gap-4 text-sm">
+                      {report.reportType === 'financial' && (
+                        <>
+                          <div className="flex items-center gap-2 text-green-600 font-bold">
+                            <FaMoneyBillWave />
+                            LKR {report.amountLKR?.toLocaleString()}
+                          </div>
+                          {report.amountUSD && (
+                            <div className="flex items-center gap-2 text-blue-600 font-bold">
+                              <FaDollarSign />
+                              ${parseFloat(report.amountUSD).toFixed(2)} USD
+                            </div>
+                          )}
+                        </>
+                      )}
+
+                      {report.reportType === 'people_helped' && (
+                        <div className="flex items-center gap-2 text-purple-600 font-bold">
+                          <FaUsers />
+                          {report.peopleImpacted} people impacted
+                        </div>
+                      )}
+
+                      <div className="ml-auto text-xs text-gray-400">
+                        by {report.reportedBy?.name} ({report.reportedBy?.organization})
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default ProjectDetails;
