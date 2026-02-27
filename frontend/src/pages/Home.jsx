@@ -76,6 +76,10 @@ const Home = () => {
 
             <Link to="/reports" className="hover:text-accent transition">Reports</Link>
 
+            {/* Collab Hub Link - Member 04 */}
+            <Link to="/collab" className="hover:text-accent transition flex items-center gap-1">
+              <FaHandshake /> Collab Hub
+            </Link>
 
             {/* Admin Dashboard link - Only visible if user role is admin */}
             {user?.role === 'admin' && (

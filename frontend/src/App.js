@@ -11,6 +11,7 @@ import Login from './pages/Login';
 import Signup from './pages/Signup';
 import AdminDashboard from './pages/AdminDashboard';
 import SDGManagement from './pages/SDGManagement';
+import CollabHub from './pages/CollabHub';
 
 // 🛡️ Protected Route Component for Admin
 const AdminRoute = ({ children }) => {
@@ -64,6 +65,8 @@ function App() {
         <Route path="/projects" element={<Projects />} />
         {/* OR make it protected: */}
         {/* <Route path="/projects" element={<PrivateRoute><Projects /></PrivateRoute>} /> */}
+
+        <Route path="/collab" element={<CollabHub />} />
 
         {/* SDG Management - Protected for Member 02 */}
         <Route 
