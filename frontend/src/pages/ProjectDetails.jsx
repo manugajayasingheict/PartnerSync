@@ -14,6 +14,9 @@ const ProjectDetails = () => {
   const [error, setError] = useState(null);
   const [user, setUser] = useState(null);
   
+  const [formErrors, setFormErrors] = useState({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  
   // Report submission state
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState({
@@ -66,8 +69,45 @@ const ProjectDetails = () => {
 
   const canSubmitReport = user?.role === 'admin' || user?.role === 'partner' || user?.role === 'government';
 
+  // Client-side form validation
+  const validateForm = () => {
+    const errors = {};
+    
+    if (!formData.description || formData.description.trim() === '') {
+      errors.description = 'Description is required';
+    } else if (formData.description.length > 500) {
+      errors.description = 'Description must be 500 characters or less';
+    }
+    
+    if (formData.reportType === 'financial') {
+      if (!formData.amountLKR || formData.amountLKR <= 0) {
+        errors.amountLKR = 'Please enter a positive amount';
+      }
+    }
+    
+    if (formData.reportType === 'people_helped') {
+      if (!formData.peopleImpacted || formData.peopleImpacted < 1) {
+        errors.peopleImpacted = 'Please enter at least 1 person';
+      }
+      if (formData.peopleImpacted && !Number.isInteger(Number(formData.peopleImpacted))) {
+        errors.peopleImpacted = 'Must be a whole number';
+      }
+    }
+    
+    setFormErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    // Validate before submitting
+    if (!validateForm()) {
+      alert('Please fix the errors in the form');
+      return;
+    }
+    
+    setIsSubmitting(true);
     
     try {
       const token = localStorage.getItem('token');
@@ -78,12 +118,17 @@ const ProjectDetails = () => {
       );
 
       if (response.data.success) {
-        alert(response.data.message);
+        alert(response.data.message + (response.data.warning ? ` (${response.data.warning})` : ''));
         resetForm();
         fetchProjectData(); // Refresh all data
       }
     } catch (error) {
-      alert(error.response?.data?.error || 'Failed to submit report');
+      const errorMsg = Array.isArray(error.response?.data?.error) 
+        ? error.response.data.error.join(', ')
+        : error.response?.data?.error || 'Failed to submit report';
+      alert(errorMsg);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -98,7 +143,7 @@ const ProjectDetails = () => {
   };
 
   const handleDeleteReport = async (reportId) => {
-    if (!window.confirm('Delete this report?')) return;
+    if (!window.confirm('Are you sure you want to delete this report? This action cannot be undone.')) return;
 
     try {
       const token = localStorage.getItem('token');
@@ -110,7 +155,8 @@ const ProjectDetails = () => {
       alert('Report deleted successfully');
       fetchProjectData(); // Refresh data
     } catch (error) {
-      alert(error.response?.data?.error || 'Failed to delete report');
+      const errorMsg = error.response?.data?.error || 'Failed to delete report';
+      alert(errorMsg);
     }
   };
 
@@ -149,17 +195,20 @@ const ProjectDetails = () => {
         fetchProjectData(); // Refresh data
       }
     } catch (error) {
-      alert(error.response?.data?.error || 'Failed to update report');
+      const errorMsg = Array.isArray(error.response?.data?.error)
+        ? error.response.data.error.join(', ')
+        : error.response?.data?.error || 'Failed to update report';
+      alert(errorMsg);
     }
   };
 
   const canEditOrDelete = (report) => {
     if (!user) {
-      console.log('❌ No user logged in');
+      console.log('No user logged in');
       return false;
     }
     
-    console.log('🔍 Authorization Check:');
+    console.log('Authorization Check:');
     console.log('User:', user);
     console.log('User ID from localStorage:', user._id || user.id);
     console.log('User Role:', user.role);
@@ -168,7 +217,7 @@ const ProjectDetails = () => {
     
     // Admin can edit/delete any report
     if (user.role === 'admin') {
-      console.log('✅ User is admin - access granted');
+      console.log('User is admin - access granted');
       return true;
     }
     
@@ -451,50 +500,99 @@ const ProjectDetails = () => {
 
               {formData.reportType === 'financial' && (
                 <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-2">Amount Spent (LKR)</label>
+                  <label className="block text-sm font-bold text-gray-700 mb-2">Amount Spent (LKR) *</label>
                   <input 
                     type="number" 
-                    className="w-full p-3 border rounded-lg"
+                    className={`w-full p-3 border rounded-lg ${
+                      formErrors.amountLKR ? 'border-red-500 bg-red-50' : 'border-gray-300'
+                    }`}
                     placeholder="50000"
+                    min="0"
+                    step="0.01"
                     value={formData.amountLKR}
-                    onChange={(e) => setFormData({...formData, amountLKR: e.target.value})}
+                    onChange={(e) => {
+                      setFormData({...formData, amountLKR: e.target.value});
+                      if (formErrors.amountLKR) setFormErrors({...formErrors, amountLKR: ''});
+                    }}
                     required={formData.reportType === 'financial'}
                   />
+                  {formErrors.amountLKR && (
+                    <p className="text-red-600 text-xs mt-1 flex items-center gap-1">
+                      <FaExclamationTriangle /> {formErrors.amountLKR}
+                    </p>
+                  )}
                   <p className="text-xs text-gray-400 mt-1">USD conversion will be automatic</p>
                 </div>
               )}
 
               {formData.reportType === 'people_helped' && (
                 <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-2">Number of People</label>
+                  <label className="block text-sm font-bold text-gray-700 mb-2">Number of People *</label>
                   <input 
                     type="number" 
-                    className="w-full p-3 border rounded-lg"
+                    className={`w-full p-3 border rounded-lg ${
+                      formErrors.peopleImpacted ? 'border-red-500 bg-red-50' : 'border-gray-300'
+                    }`}
                     placeholder="150"
+                    min="1"
+                    step="1"
                     value={formData.peopleImpacted}
-                    onChange={(e) => setFormData({...formData, peopleImpacted: e.target.value})}
+                    onChange={(e) => {
+                      setFormData({...formData, peopleImpacted: e.target.value});
+                      if (formErrors.peopleImpacted) setFormErrors({...formErrors, peopleImpacted: ''});
+                    }}
                     required={formData.reportType === 'people_helped'}
                   />
+                  {formErrors.peopleImpacted && (
+                    <p className="text-red-600 text-xs mt-1 flex items-center gap-1">
+                      <FaExclamationTriangle /> {formErrors.peopleImpacted}
+                    </p>
+                  )}
                 </div>
               )}
 
               <div className="col-span-2">
-                <label className="block text-sm font-bold text-gray-700 mb-2">Description</label>
+                <label className="block text-sm font-bold text-gray-700 mb-2">
+                  Description * 
+                  <span className="text-gray-400 font-normal ml-2">
+                    ({formData.description.length}/500)
+                  </span>
+                </label>
                 <textarea 
-                  className="w-full p-3 border rounded-lg h-24"
+                  className={`w-full p-3 border rounded-lg h-24 ${
+                    formErrors.description ? 'border-red-500 bg-red-50' : 'border-gray-300'
+                  }`}
                   placeholder="Describe the progress or impact..."
+                  maxLength="500"
                   value={formData.description}
-                  onChange={(e) => setFormData({...formData, description: e.target.value})}
+                  onChange={(e) => {
+                    setFormData({...formData, description: e.target.value});
+                    if (formErrors.description) setFormErrors({...formErrors, description: ''});
+                  }}
                   required
                 ></textarea>
+                {formErrors.description && (
+                  <p className="text-red-600 text-xs mt-1 flex items-center gap-1">
+                    <FaExclamationTriangle /> {formErrors.description}
+                  </p>
+                )}
               </div>
             </div>
 
             <button 
               type="submit"
-              className="w-full bg-primary text-white font-bold py-3 rounded-lg hover:bg-gray-800 transition shadow-lg"
+              disabled={isSubmitting}
+              className={`w-full font-bold py-3 rounded-lg transition shadow-lg flex items-center justify-center gap-2 ${
+                isSubmitting 
+                  ? 'bg-gray-400 cursor-not-allowed' 
+                  : 'bg-primary text-white hover:bg-gray-800'
+              }`}
             >
-              Submit Report
+              {isSubmitting ? (
+                <><FaSpinner className="animate-spin" /> Submitting...</>
+              ) : (
+                'Submit Report'
+              )}
             </button>
           </form>
         </div>
