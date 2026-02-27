@@ -104,6 +104,7 @@ describe('Report Controller Unit Tests', () => {
     });
 
     describe('POST /api/reports/submit - Submit Report', () => {
+        // TEST 01: Submit financial report with USD conversion
         test('should successfully submit a financial report with USD conversion', async () => {
             // Mock successful exchange rate API response
             axios.get.mockResolvedValue({
@@ -136,6 +137,7 @@ describe('Report Controller Unit Tests', () => {
             );
         });
 
+        // TEST 02: Submit financial report when exchange rate API fails
         test('should submit financial report even when exchange rate API fails', async () => {
             // Mock failed exchange rate API response
             axios.get.mockRejectedValue(new Error('API unavailable'));
@@ -157,6 +159,7 @@ describe('Report Controller Unit Tests', () => {
             expect(response.body.warning).toContain('USD conversion unavailable');
         });
 
+        // TEST 03: Submit people_helped report
         test('should successfully submit a people_helped report', async () => {
             const reportData = {
                 project: testProject._id.toString(),
@@ -175,6 +178,7 @@ describe('Report Controller Unit Tests', () => {
             expect(response.body.data.reportType).toBe('people_helped');
         });
 
+        // TEST 04: Validation - missing project
         test('should fail when project is not provided', async () => {
             const reportData = {
                 reportType: 'milestone',
@@ -190,6 +194,7 @@ describe('Report Controller Unit Tests', () => {
             expect(response.body.error).toContain('select a project');
         });
 
+        // TEST 05: Validation - missing reportType
         test('should fail when reportType is not provided', async () => {
             const reportData = {
                 project: testProject._id.toString(),
@@ -205,6 +210,7 @@ describe('Report Controller Unit Tests', () => {
             expect(response.body.error).toContain('specify a report type');
         });
 
+        // TEST 06: Validation - empty description
         test('should fail when description is empty', async () => {
             const reportData = {
                 project: testProject._id.toString(),
@@ -221,6 +227,7 @@ describe('Report Controller Unit Tests', () => {
             expect(response.body.error).toContain('provide a description');
         });
 
+        // TEST 07: Validation - financial report without positive amount
         test('should fail financial report without positive amountLKR', async () => {
             const reportData = {
                 project: testProject._id.toString(),
@@ -238,6 +245,7 @@ describe('Report Controller Unit Tests', () => {
             expect(response.body.error).toContain('positive amount in LKR');
         });
 
+        // TEST 08: Validation - people report without valid peopleImpacted
         test('should fail people_helped report without valid peopleImpacted', async () => {
             const reportData = {
                 project: testProject._id.toString(),
@@ -255,6 +263,7 @@ describe('Report Controller Unit Tests', () => {
             expect(response.body.error).toContain('positive whole number');
         });
 
+        // TEST 09: Validation - nonexistent project
         test('should fail when project does not exist', async () => {
             const fakeProjectId = new mongoose.Types.ObjectId();
             const reportData = {
@@ -272,6 +281,7 @@ describe('Report Controller Unit Tests', () => {
             expect(response.body.error).toContain('Project not found');
         });
 
+        // TEST 10: Validation - project status check
         test('should fail when project status is not "In Progress"', async () => {
             // Update project status to "Completed"
             testProject.status = 'Completed';
@@ -294,6 +304,7 @@ describe('Report Controller Unit Tests', () => {
     });
 
     describe('GET /api/reports/project/:id - Get Project Reports', () => {
+        // TEST 11: Get all reports for a project
         test('should return all reports for a specific project', async () => {
             // Create multiple reports for the project
             await Report.create({
@@ -320,6 +331,7 @@ describe('Report Controller Unit Tests', () => {
             expect(response.body.data).toHaveLength(2);
         });
 
+        // TEST 12: Get reports for project with no reports
         test('should return empty array for project with no reports', async () => {
             const response = await request(app)
                 .get(`/api/reports/project/${testProject._id}`)
@@ -330,6 +342,7 @@ describe('Report Controller Unit Tests', () => {
             expect(response.body.data).toHaveLength(0);
         });
 
+        // TEST 13: Reports sorting by date
         test('should return reports sorted by most recent first', async () => {
             // Create reports with different dates
             const report1 = await Report.create({
@@ -358,6 +371,7 @@ describe('Report Controller Unit Tests', () => {
     });
 
     describe('GET /api/reports/stats/summary - Get Statistics Summary', () => {
+        // TEST 14: Calculate financial statistics
         test('should return correct financial statistics', async () => {
             await Report.create({
                 project: testProject._id,
@@ -387,6 +401,7 @@ describe('Report Controller Unit Tests', () => {
             expect(response.body.data.financial.reportCount).toBe(2);
         });
 
+        // TEST 15: Calculate people impacted statistics
         test('should return correct people impacted statistics', async () => {
             await Report.create({
                 project: testProject._id,
@@ -413,6 +428,7 @@ describe('Report Controller Unit Tests', () => {
             expect(response.body.data.people.reportCount).toBe(2);
         });
 
+        // TEST 16: Statistics when no reports exist
         test('should return zero statistics when no reports exist', async () => {
             const response = await request(app)
                 .get('/api/reports/stats/summary')
@@ -424,6 +440,7 @@ describe('Report Controller Unit Tests', () => {
             expect(response.body.data.totalReports).toBe(0);
         });
 
+        // TEST 17: Count reports by type
         test('should count reports by type correctly', async () => {
             await Report.create({
                 project: testProject._id,
@@ -457,6 +474,7 @@ describe('Report Controller Unit Tests', () => {
     });
 
     describe('DELETE /api/reports/remove/:id - Remove Report', () => {
+        // TEST 18: Admin delete any report
         test('should allow admin to delete any report', async () => {
             const report = await Report.create({
                 project: testProject._id,
@@ -483,6 +501,7 @@ describe('Report Controller Unit Tests', () => {
             expect(deletedReport).toBeNull();
         });
 
+        // TEST 19: Owner delete own report
         test('should allow report owner to delete their own report', async () => {
             const report = await Report.create({
                 project: testProject._id,
@@ -498,6 +517,7 @@ describe('Report Controller Unit Tests', () => {
             expect(response.body.success).toBe(true);
         });
 
+        // TEST 20: Delete nonexistent report
         test('should fail when report does not exist', async () => {
             const fakeReportId = new mongoose.Types.ObjectId();
 
@@ -511,6 +531,7 @@ describe('Report Controller Unit Tests', () => {
     });
 
     describe('PUT /api/reports/update/:id - Update Report', () => {
+        // TEST 21: Update report description
         test('should successfully update report description', async () => {
             const report = await Report.create({
                 project: testProject._id,
@@ -533,6 +554,7 @@ describe('Report Controller Unit Tests', () => {
             expect(response.body.message).toContain('updated successfully');
         });
 
+        // TEST 22: Update financial report and recalculate USD
         test('should recalculate USD when updating financial report amount', async () => {
             axios.get.mockResolvedValue({
                 data: {
@@ -567,6 +589,7 @@ describe('Report Controller Unit Tests', () => {
             expect(response.body.data.amountUSD).toBe(900);
         });
 
+        // TEST 23: Update nonexistent report
         test('should fail when report does not exist', async () => {
             const fakeReportId = new mongoose.Types.ObjectId();
 

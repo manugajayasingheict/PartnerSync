@@ -53,6 +53,7 @@ describe('Report Model Unit Tests', () => {
     });
 
     describe('Financial Report Creation', () => {
+        // TEST 01: Create valid financial report
         test('should create a valid financial report with all required fields', async () => {
             const reportData = {
                 project: testProject._id,
@@ -75,6 +76,7 @@ describe('Report Model Unit Tests', () => {
             expect(report.reportDate).toBeDefined();
         });
 
+        // TEST 02: Financial report validation - missing amountLKR
         test('should fail to create financial report without amountLKR', async () => {
             const reportData = {
                 project: testProject._id,
@@ -86,6 +88,7 @@ describe('Report Model Unit Tests', () => {
             await expect(Report.create(reportData)).rejects.toThrow();
         });
 
+        // TEST 03: Financial report validation - negative amount
         test('should fail to create financial report with negative amountLKR', async () => {
             const reportData = {
                 project: testProject._id,
@@ -98,6 +101,7 @@ describe('Report Model Unit Tests', () => {
             await expect(Report.create(reportData)).rejects.toThrow();
         });
 
+        // TEST 04: Financial report validation - zero amount
         test('should fail to create financial report with zero amountLKR', async () => {
             const reportData = {
                 project: testProject._id,
@@ -112,6 +116,7 @@ describe('Report Model Unit Tests', () => {
     });
 
     describe('People Helped Report Creation', () => {
+        // TEST 05: Create valid people_helped report
         test('should create a valid people_helped report', async () => {
             const reportData = {
                 project: testProject._id,
@@ -128,6 +133,7 @@ describe('Report Model Unit Tests', () => {
             expect(report.description).toBe('Community outreach milestone');
         });
 
+        // TEST 06: People report validation - missing peopleImpacted
         test('should fail to create people_helped report without peopleImpacted', async () => {
             const reportData = {
                 project: testProject._id,
@@ -139,6 +145,7 @@ describe('Report Model Unit Tests', () => {
             await expect(Report.create(reportData)).rejects.toThrow();
         });
 
+        // TEST 07: People report validation - decimal value
         test('should fail to create people_helped report with decimal peopleImpacted', async () => {
             const reportData = {
                 project: testProject._id,
@@ -151,6 +158,7 @@ describe('Report Model Unit Tests', () => {
             await expect(Report.create(reportData)).rejects.toThrow();
         });
 
+        // TEST 08: People report validation - negative value
         test('should fail to create people_helped report with negative peopleImpacted', async () => {
             const reportData = {
                 project: testProject._id,
@@ -165,6 +173,7 @@ describe('Report Model Unit Tests', () => {
     });
 
     describe('Milestone and Other Report Types', () => {
+        // TEST 09: Create milestone report
         test('should create a valid milestone report', async () => {
             const reportData = {
                 project: testProject._id,
@@ -179,6 +188,7 @@ describe('Report Model Unit Tests', () => {
             expect(report.description).toBe('Project phase 1 completed');
         });
 
+        // TEST 10: Create other type report
         test('should create a valid other type report', async () => {
             const reportData = {
                 project: testProject._id,
@@ -192,6 +202,7 @@ describe('Report Model Unit Tests', () => {
             expect(report.reportType).toBe('other');
         });
 
+        // TEST 11: Report type validation - invalid type
         test('should fail to create report with invalid reportType', async () => {
             const reportData = {
                 project: testProject._id,
@@ -205,6 +216,7 @@ describe('Report Model Unit Tests', () => {
     });
 
     describe('Required Fields Validation', () => {
+        // TEST 12: Required field validation - missing project
         test('should fail to create report without project', async () => {
             const reportData = {
                 reportedBy: testUser._id,
@@ -215,6 +227,7 @@ describe('Report Model Unit Tests', () => {
             await expect(Report.create(reportData)).rejects.toThrow();
         });
 
+        // TEST 13: Required field validation - missing reportedBy
         test('should fail to create report without reportedBy', async () => {
             const reportData = {
                 project: testProject._id,
@@ -225,6 +238,7 @@ describe('Report Model Unit Tests', () => {
             await expect(Report.create(reportData)).rejects.toThrow();
         });
 
+        // TEST 14: Required field validation - missing description
         test('should fail to create report without description', async () => {
             const reportData = {
                 project: testProject._id,
@@ -235,6 +249,7 @@ describe('Report Model Unit Tests', () => {
             await expect(Report.create(reportData)).rejects.toThrow();
         });
 
+        // TEST 15: Description length validation
         test('should fail to create report with description exceeding 500 characters', async () => {
             const longDescription = 'a'.repeat(501);
             const reportData = {
@@ -249,6 +264,7 @@ describe('Report Model Unit Tests', () => {
     });
 
     describe('Default Values', () => {
+        // TEST 16: Default reportType value
         test('should set default reportType to financial', async () => {
             const reportData = {
                 project: testProject._id,
@@ -262,6 +278,7 @@ describe('Report Model Unit Tests', () => {
             expect(report.reportType).toBe('financial');
         });
 
+        // TEST 17: Default reportDate value
         test('should set reportDate to current date by default', async () => {
             const beforeCreate = new Date();
             
@@ -282,6 +299,7 @@ describe('Report Model Unit Tests', () => {
     });
 
     describe('USD Amount Validation', () => {
+        // TEST 18: Allow null USD amount
         test('should allow null amountUSD', async () => {
             const reportData = {
                 project: testProject._id,
@@ -297,6 +315,7 @@ describe('Report Model Unit Tests', () => {
             expect(report.amountUSD).toBeNull();
         });
 
+        // TEST 19: Negative USD amount validation
         test('should fail with negative amountUSD', async () => {
             const reportData = {
                 project: testProject._id,
@@ -312,6 +331,7 @@ describe('Report Model Unit Tests', () => {
     });
 
     describe('Report Querying', () => {
+        // TEST 20: Query reports by project
         test('should find reports by project', async () => {
             await Report.create({
                 project: testProject._id,
@@ -332,6 +352,7 @@ describe('Report Model Unit Tests', () => {
             expect(reports.length).toBe(2);
         });
 
+        // TEST 21: Query reports by reportType
         test('should find reports by reportType', async () => {
             await Report.create({
                 project: testProject._id,
