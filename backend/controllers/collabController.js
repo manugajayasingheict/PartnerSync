@@ -1,20 +1,23 @@
 const Post = require('../models/Post');
 const Notification = require('../models/Notification');
-const Project = require('../models/Project'); // Assuming you have this from Member 03
 
-// 1. POST /api/collab/post – Create Announcement with DiceBear API
+// 1. POST /api/collab/post – Create Announcement with DiceBear Avatar
 exports.createPost = async (req, res) => {
   try {
     const { title, content, type } = req.body;
-    
-    // External API Feature: Generate Avatar based on Organization Name
-    // It creates a dynamic image URL, no API key required!
+
+    // Validate required fields
+    if (!title || !content || !type) {
+      return res.status(400).json({ error: 'Title, content, and type are required.' });
+    }
+
+    // 🎨 DiceBear External API — generates avatar from org name, no API key needed
     const orgName = req.user.organization || req.user.name;
     const avatarUrl = `https://api.dicebear.com/9.x/initials/svg?seed=${encodeURIComponent(orgName)}`;
 
     const newPost = new Post({
-      author: req.user._id,
-      authorName: req.user.name,
+      author:       req.user._id,
+      authorName:   req.user.name,
       organization: req.user.organization,
       avatarUrl,
       title,
@@ -24,7 +27,6 @@ exports.createPost = async (req, res) => {
 
     await newPost.save();
 
-    // Bonus: Automatically notify all users about the new partnership call
     res.status(201).json({ message: 'Post created successfully', post: newPost });
   } catch (error) {
     res.status(500).json({ error: 'Server error while creating post' });
@@ -34,7 +36,6 @@ exports.createPost = async (req, res) => {
 // 2. GET /api/collab/feed – Retrieve Activity Feed
 exports.getFeed = async (req, res) => {
   try {
-    // Fetch posts, newest first
     const posts = await Post.find().sort({ createdAt: -1 });
     res.status(200).json(posts);
   } catch (error) {
@@ -47,19 +48,23 @@ exports.addComment = async (req, res) => {
   try {
     const { postId, text } = req.body;
 
+    // Validate required fields
+    if (!postId || !text) {
+      return res.status(400).json({ error: 'postId and text are required.' });
+    }
+
     const post = await Post.findById(postId);
     if (!post) return res.status(404).json({ error: 'Post not found' });
 
-    // Add the comment
     post.comments.push({
-      user: req.user._id,
+      user:     req.user._id,
       userName: req.user.name,
       text
     });
 
     await post.save();
 
-    // Auto-generate a notification for the post author
+    // 🔔 Auto-notify post author (skip if commenting on own post)
     if (post.author.toString() !== req.user._id.toString()) {
       await Notification.create({
         recipient: post.author,
@@ -76,8 +81,15 @@ exports.addComment = async (req, res) => {
 // 4. GET /api/collab/notifications – Fetch Alerts
 exports.getNotifications = async (req, res) => {
   try {
-    // Find alerts only for the logged-in user
-    const notifications = await Notification.find({ recipient: req.user._id }).sort({ createdAt: -1 });
+    const notifications = await Notification.find({ recipient: req.user._id })
+      .sort({ createdAt: -1 });
+
+    // ✅ Mark all as read after fetching
+    await Notification.updateMany(
+      { recipient: req.user._id, isRead: false },
+      { $set: { isRead: true } }
+    );
+
     res.status(200).json(notifications);
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch notifications' });
