@@ -1,0 +1,41 @@
+config:
+  target: "http://localhost:5000"
+  phases:
+    - duration: 60
+      arrivalRate: 5
+      name: "Warm up phase"
+    - duration: 120
+      arrivalRate: 20
+      name: "Sustained load phase"
+  defaults:
+    headers:
+      Content-Type: "application/json"
+
+scenarios:
+  - name: "Full System User Journey"
+    flow:
+      # 1. Member 01: User Authentication (Login)
+      - post:
+          url: "/api/auth/login"
+          json:
+            email: "admin@partnersync.com"
+            password: "password123"
+          capture:
+            - json: "$.token"
+              as: "authToken"
+
+      # 2. Member 03: Project Registry (Fetch Feed & Stats)
+      - get:
+          url: "/api/projects"
+      - get:
+          url: "/api/projects/with-stats"
+
+      # 3. Member 02: SDG Management & Reports (Fetch Reports)
+      - get:
+          url: "/api/reports"
+          headers:
+            Authorization: "Bearer {{ authToken }}"
+
+      # 4. Member 04: Communication Hub (Fetch Collab Feed)
+      - get:
+          url: "/api/collab/feed"
