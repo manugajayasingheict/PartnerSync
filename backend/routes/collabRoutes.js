@@ -11,5 +11,7 @@ router.post('/post', collabController.createPost);
 router.get('/feed', collabController.getFeed);
 router.post('/comment', collabController.addComment);
 router.get('/notifications', collabController.getNotifications);
+router.put('/post/:id',    collabController.updatePost);
+router.delete('/post/:id', collabController.deletePost);
 
 module.exports = router;

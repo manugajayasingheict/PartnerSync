@@ -19,6 +19,20 @@ const api = {
       },
       body: JSON.stringify(body),
     }).then((r) => r.json()),
+  put: (path, body) =>
+    fetch(`${API_BASE}${path}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${getToken()}`,
+      },
+      body: JSON.stringify(body),
+    }).then((r) => r.json()),
+  delete: (path) =>
+    fetch(`${API_BASE}${path}`, {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${getToken()}` },
+    }).then((r) => r.json()),
 };
 
 // ── ICONS ────────────────────────────────────────────────────
@@ -45,6 +59,18 @@ const IconX = () => (
 const IconSend = () => (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
     <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
+  </svg>
+);
+const IconEdit = () => (
+  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+  </svg>
+);
+const IconTrash = () => (
+  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+    <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+    <path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/>
   </svg>
 );
 
@@ -161,6 +187,87 @@ const CreatePostModal = ({ onClose, onCreated }) => {
   );
 };
 
+// ── EDIT POST MODAL ──────────────────────────────────────────
+const EditPostModal = ({ post, onClose, onUpdated }) => {
+  const [form, setForm] = useState({ title: post.title, content: post.content, type: post.type });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  const handleSubmit = async () => {
+    if (!form.title || !form.content) {
+      setError('Title and content are required.');
+      return;
+    }
+    setLoading(true);
+    try {
+      const res = await api.put(`/collab/post/${post._id}`, form);
+      if (res.post) {
+        onUpdated(res.post);
+        onClose();
+      } else {
+        setError(res.error || 'Failed to update post.');
+      }
+    } catch {
+      setError('Server error. Is your backend running?');
+    }
+    setLoading(false);
+  };
+
+  return (
+    <div className="ch-overlay" onClick={onClose}>
+      <div className="ch-modal" onClick={(e) => e.stopPropagation()}>
+        <div className="ch-modal__header">
+          <h2>Edit Post</h2>
+          <button className="ch-icon-btn" onClick={onClose}><IconX /></button>
+        </div>
+
+        <div className="ch-modal__body">
+          <div className="ch-field">
+            <label>Type</label>
+            <div className="ch-toggle">
+              {['Announcement', 'Call for Partnership'].map((t) => (
+                <button
+                  key={t}
+                  className={`ch-toggle__btn ${form.type === t ? 'active' : ''}`}
+                  onClick={() => setForm({ ...form, type: t })}
+                >{t}</button>
+              ))}
+            </div>
+          </div>
+
+          <div className="ch-field">
+            <label>Title</label>
+            <input
+              className="ch-input"
+              value={form.title}
+              onChange={(e) => setForm({ ...form, title: e.target.value })}
+            />
+          </div>
+
+          <div className="ch-field">
+            <label>Content</label>
+            <textarea
+              className="ch-input ch-textarea"
+              value={form.content}
+              onChange={(e) => setForm({ ...form, content: e.target.value })}
+              rows={5}
+            />
+          </div>
+
+          {error && <p className="ch-error">{error}</p>}
+        </div>
+
+        <div className="ch-modal__footer">
+          <button className="ch-btn ch-btn--ghost" onClick={onClose}>Cancel</button>
+          <button className="ch-btn ch-btn--primary" onClick={handleSubmit} disabled={loading}>
+            {loading ? 'Saving...' : 'Save Changes'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 // ── COMMENT SECTION ──────────────────────────────────────────
 const CommentSection = ({ post, onClose }) => {
   const [text, setText] = useState('');
@@ -266,7 +373,7 @@ const NotificationsPanel = ({ onClose }) => {
 };
 
 // ── POST CARD ────────────────────────────────────────────────
-const PostCard = ({ post, onComment }) => (
+const PostCard = ({ post, onComment, onEdit, onDelete, currentUserId }) => (
   <div className="ch-card">
     <div className="ch-card__header">
       <Avatar name={post.organization || post.authorName} />
@@ -290,6 +397,18 @@ const PostCard = ({ post, onComment }) => (
         <IconChat />
         <span>{post.comments?.length || 0} Comments</span>
       </button>
+
+      {/* Only show Edit/Delete to the post author */}
+      {currentUserId && post.author === currentUserId && (
+        <div className="ch-card__actions">
+          <button className="ch-btn ch-btn--ghost ch-btn--sm ch-btn--edit" onClick={() => onEdit(post)}>
+            <IconEdit /> Edit
+          </button>
+          <button className="ch-btn ch-btn--ghost ch-btn--sm ch-btn--delete" onClick={() => onDelete(post._id)}>
+            <IconTrash /> Delete
+          </button>
+        </div>
+      )}
     </div>
   </div>
 );
@@ -300,9 +419,20 @@ export default function CollabHub() {
   const [loading, setLoading] = useState(true);
   const [showCreate, setShowCreate] = useState(false);
   const [commentPost, setCommentPost] = useState(null);
+  const [editPost, setEditPost] = useState(null);
   const [showNotifs, setShowNotifs] = useState(false);
   const [notifCount, setNotifCount] = useState(0);
   const [filter, setFilter] = useState('All');
+  const [currentUserId, setCurrentUserId] = useState(null);
+
+  // Get logged in user id from localStorage
+  useEffect(() => {
+    const savedUser = localStorage.getItem('user');
+    if (savedUser) {
+      const parsed = JSON.parse(savedUser);
+      setCurrentUserId(parsed._id || parsed.id);
+    }
+  }, []);
 
   const loadFeed = useCallback(async () => {
     setLoading(true);
@@ -313,7 +443,6 @@ export default function CollabHub() {
 
   useEffect(() => {
     loadFeed();
-    // Check notification count
     api.get('/collab/notifications').then((data) => {
       if (Array.isArray(data)) {
         setNotifCount(data.filter((n) => !n.isRead).length);
@@ -322,6 +451,16 @@ export default function CollabHub() {
   }, [loadFeed]);
 
   const handleCreated = (post) => setFeed((prev) => [post, ...prev]);
+  const handleUpdated = (updated) => setFeed((prev) => prev.map((p) => p._id === updated._id ? updated : p));
+  const handleDelete  = async (postId) => {
+    if (!window.confirm('Are you sure you want to delete this post?')) return;
+    const res = await api.delete(`/collab/post/${postId}`);
+    if (res.message) {
+      setFeed((prev) => prev.filter((p) => p._id !== postId));
+    } else {
+      alert(res.error || 'Failed to delete post.');
+    }
+  };
 
   const filtered = filter === 'All' ? feed : feed.filter((p) => p.type === filter);
 
@@ -382,13 +521,23 @@ export default function CollabHub() {
           </div>
         )}
         {!loading && filtered.map((post) => (
-          <PostCard key={post._id} post={post} onComment={setCommentPost} />
+          <PostCard
+            key={post._id}
+            post={post}
+            onComment={setCommentPost}
+            onEdit={setEditPost}
+            onDelete={handleDelete}
+            currentUserId={currentUserId}
+          />
         ))}
       </main>
 
       {/* ── MODALS ── */}
       {showCreate && (
         <CreatePostModal onClose={() => setShowCreate(false)} onCreated={handleCreated} />
+      )}
+      {editPost && (
+        <EditPostModal post={editPost} onClose={() => setEditPost(null)} onUpdated={handleUpdated} />
       )}
       {commentPost && (
         <CommentSection post={commentPost} onClose={() => setCommentPost(null)} />
