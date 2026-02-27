@@ -10,6 +10,13 @@ const Reports = () => {
   const [projectsWithStats, setProjectsWithStats] = useState([]);
   const [loading, setLoading] = useState(true);
   
+  // Error state management
+  const [errors, setErrors] = useState({
+    stats: null,
+    organizations: null,
+    projects: null
+  });
+  
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -33,12 +40,17 @@ const Reports = () => {
 
   const fetchStats = async () => {
     try {
+      setErrors(prev => ({ ...prev, stats: null })); // Clear previous errors
       const response = await axios.get('http://localhost:5000/api/reports/stats/summary');
       if (response.data.success) {
         setStats(response.data.data);
       }
     } catch (error) {
       console.error('Error fetching stats:', error);
+      const errorMessage = error.response?.data?.error || 
+                          error.message || 
+                          'Failed to load statistics. Please try again.';
+      setErrors(prev => ({ ...prev, stats: errorMessage }));
     } finally {
       setLoading(false);
     }
@@ -46,17 +58,22 @@ const Reports = () => {
 
   const fetchOrganizations = async () => {
     try {
+      setErrors(prev => ({ ...prev, organizations: null }));
       const response = await axios.get('http://localhost:5000/api/projects/organizations');
       if (response.data.success) {
         setOrganizations(response.data.data);
       }
     } catch (error) {
       console.error('Error fetching organizations:', error);
+      const errorMessage = error.response?.data?.error || 
+                          'Failed to load organizations filter';
+      setErrors(prev => ({ ...prev, organizations: errorMessage }));
     }
   };
 
   const fetchProjectsWithStats = async (page) => {
     try {
+      setErrors(prev => ({ ...prev, projects: null }));
       // Build query string with filters
       let queryString = `page=${page}&limit=${limit}`;
       if (filters.sdgGoal) queryString += `&sdgGoal=${encodeURIComponent(filters.sdgGoal)}`;
@@ -72,6 +89,9 @@ const Reports = () => {
       }
     } catch (error) {
       console.error('Error fetching projects with stats:', error);
+      const errorMessage = error.response?.data?.error || 
+                          'Failed to load projects. Please try again.';
+      setErrors(prev => ({ ...prev, projects: errorMessage }));
     }
   };
 
@@ -121,6 +141,31 @@ const Reports = () => {
           <p className="text-gray-500">Track financial impact and milestones across all projects</p>
         </div>
       </div>
+
+      {/* Error Display - Statistics */}
+      {errors.stats && (
+        <div className="max-w-7xl mx-auto mb-6">
+          <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded-lg flex items-start gap-3">
+            <FaExclamationTriangle className="text-red-500 mt-1 flex-shrink-0" />
+            <div className="flex-1">
+              <h3 className="text-red-800 font-bold mb-1">Error Loading Statistics</h3>
+              <p className="text-red-700 text-sm">{errors.stats}</p>
+              <button 
+                onClick={fetchStats}
+                className="mt-2 text-xs font-bold text-red-600 hover:text-red-800 underline"
+              >
+                Try Again
+              </button>
+            </div>
+            <button 
+              onClick={() => setErrors(prev => ({ ...prev, stats: null }))}
+              className="text-red-500 hover:text-red-700"
+            >
+              <FaTimes />
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Statistics Dashboard */}
       {loading ? (
@@ -306,6 +351,42 @@ const Reports = () => {
                 </div>
               )}
             </div>
+            
+            {/* Error Display - Projects */}
+            {errors.projects && (
+              <div className="mb-6">
+                <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded-lg flex items-start gap-3">
+                  <FaExclamationTriangle className="text-red-500 mt-1 flex-shrink-0" />
+                  <div className="flex-1">
+                    <h3 className="text-red-800 font-bold mb-1">Error Loading Projects</h3>
+                    <p className="text-red-700 text-sm">{errors.projects}</p>
+                    <button 
+                      onClick={() => fetchProjectsWithStats(currentPage)}
+                      className="mt-2 text-xs font-bold text-red-600 hover:text-red-800 underline"
+                    >
+                      Try Again
+                    </button>
+                  </div>
+                  <button 
+                    onClick={() => setErrors(prev => ({ ...prev, projects: null }))}
+                    className="text-red-500 hover:text-red-700"
+                  >
+                    <FaTimes />
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* No Results Message */}
+            {!errors.projects && projectsWithStats.length === 0 && (
+              <div className="text-center py-12 bg-white rounded-xl border-2 border-dashed border-gray-300 mb-8">
+                <FaClipboardList className="text-5xl text-gray-300 mx-auto mb-4" />
+                <p className="text-gray-500 font-bold mb-2">No Projects Found</p>
+                <p className="text-sm text-gray-400">
+                  {activeFiltersCount > 0 ? 'Try adjusting your filters' : 'No projects available yet'}
+                </p>
+              </div>
+            )}
             
             {/* Project Cards Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
