@@ -1,7 +1,9 @@
 const express = require('express');
 const dotenv = require('dotenv');
 const cors = require('cors');
+const swaggerUi = require('swagger-ui-express');
 const connectDB = require('./config/db');
+const swaggerSpec = require('./config/swagger');
 
 // Load environment variables
 dotenv.config();
@@ -14,6 +16,9 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 
+// API documentation
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+
 // ── Routes ───────────────────────────────────────────────────
 app.use('/api/auth',     require('./routes/authRoutes'));     // ✅ Member 01
 app.use('/api/sdg',      require('./routes/sdgRoutes'));      // ✅ Member 02
@@ -23,7 +28,7 @@ app.use('/api/collab',   require('./routes/collabRoutes'));   // ✅ Member 04 (
 
 // Root Route
 app.get('/', (req, res) => {
-  res.send('PartnerSync API is running...');
+  res.send('PartnerSync API is running... OpenAPI docs: /api-docs');
 });
 
 // Start Server

@@ -112,7 +112,7 @@ const ProjectDetails = () => {
     try {
       const token = localStorage.getItem('token');
       const response = await axios.post(
-        'http://localhost:5000/api/reports/submit',
+        'http://localhost:5000/api/reports',
         { ...formData, project: id },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -148,7 +148,7 @@ const ProjectDetails = () => {
     try {
       const token = localStorage.getItem('token');
       await axios.delete(
-        `http://localhost:5000/api/reports/remove/${reportId}`,
+        `http://localhost:5000/api/reports/${reportId}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       
@@ -184,7 +184,7 @@ const ProjectDetails = () => {
     try {
       const token = localStorage.getItem('token');
       const response = await axios.put(
-        `http://localhost:5000/api/reports/update/${reportId}`,
+        `http://localhost:5000/api/reports/${reportId}`,
         editForm,
         { headers: { Authorization: `Bearer ${token}` } }
       );

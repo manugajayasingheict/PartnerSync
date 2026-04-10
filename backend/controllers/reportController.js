@@ -3,8 +3,48 @@ const Project = require('../models/Project');
 const axios = require('axios');
 const asyncHandler = require('express-async-handler');
 
+// @desc    Get all reports (optionally filtered by project or reportType)
+// @route   GET /api/reports
+// @access  Public
+exports.getReports = asyncHandler(async (req, res) => {
+    const filters = {};
+
+    if (req.query.project) filters.project = req.query.project;
+    if (req.query.reportType) filters.reportType = req.query.reportType;
+
+    const reports = await Report.find(filters)
+        .populate('reportedBy', 'name organization')
+        .populate('project', 'title organization')
+        .sort({ reportDate: -1 });
+
+    res.status(200).json({
+        success: true,
+        count: reports.length,
+        data: reports
+    });
+});
+
+// @desc    Get single report by ID
+// @route   GET /api/reports/:id
+// @access  Public
+exports.getReportById = asyncHandler(async (req, res) => {
+    const report = await Report.findById(req.params.id)
+        .populate('reportedBy', 'name organization')
+        .populate('project', 'title organization');
+
+    if (!report) {
+        res.status(404);
+        throw new Error('Report not found');
+    }
+
+    res.status(200).json({
+        success: true,
+        data: report
+    });
+});
+
 // @desc    Submit a new progress report with auto USD conversion
-// @route   POST /api/reports/submit
+// @route   POST /api/reports
 // @access  Private (Admin, Partner, Government)
 exports.submitReport = asyncHandler(async (req, res) => {
     const { project, reportType, amountLKR, peopleImpacted, description } = req.body;
@@ -166,7 +206,7 @@ exports.getStatsSummary = asyncHandler(async (req, res) => {
 });
 
 // @desc    Delete a report entry (for erroneous entries)
-// @route   DELETE /api/reports/remove/:id
+// @route   DELETE /api/reports/:id
 // @access  Private (Admin or Report Owner)
 exports.removeReport = asyncHandler(async (req, res) => {
     const report = await Report.findById(req.params.id);
@@ -192,7 +232,7 @@ exports.removeReport = asyncHandler(async (req, res) => {
 });
 
 // @desc    Update a report entry
-// @route   PUT /api/reports/update/:id
+// @route   PUT /api/reports/:id
 // @access  Private (Admin or Report Owner)
 exports.updateReport = asyncHandler(async (req, res) => {
     const report = await Report.findById(req.params.id);
