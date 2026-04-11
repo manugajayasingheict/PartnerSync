@@ -1,3 +1,4 @@
+const mongoose = require('mongoose');
 const Post = require('../models/Post');
 const Notification = require('../models/Notification');
 
@@ -27,7 +28,7 @@ exports.createPost = async (req, res) => {
 
     await newPost.save();
 
-    res.status(201).json({ message: 'Post created successfully', post: newPost });
+    res.status(201).json({ message: 'Post created successfully', post: newPost, postId: newPost._id });
   } catch (error) {
     res.status(500).json({ error: 'Server error while creating post' });
   }
@@ -57,6 +58,7 @@ exports.addComment = async (req, res) => {
     if (!post) return res.status(404).json({ error: 'Post not found' });
 
     post.comments.push({
+      _id: new mongoose.Types.ObjectId(),
       user:     req.user._id,
       userName: req.user.name,
       text
@@ -75,6 +77,38 @@ exports.addComment = async (req, res) => {
     res.status(201).json({ message: 'Comment added successfully', post });
   } catch (error) {
     res.status(500).json({ error: 'Failed to add comment' });
+  }
+};
+
+// 3.5. PUT /api/collab/comment/:commentId – Update a comment
+exports.updateComment = async (req, res) => {
+  try {
+    const { text } = req.body;
+    const { commentId } = req.params;
+
+    if (!text) {
+      return res.status(400).json({ error: 'Text is required.' });
+    }
+
+    // Find the post containing the comment
+    const post = await Post.findOne({ 'comments._id': commentId });
+    if (!post) return res.status(404).json({ error: 'Comment not found.' });
+
+    // Find the comment
+    const comment = post.comments.id(commentId);
+    if (!comment) return res.status(404).json({ error: 'Comment not found.' });
+
+    // Only the original commenter can edit
+    if (comment.user.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ error: 'Not authorized to edit this comment.' });
+    }
+
+    comment.text = text;
+    await post.save();
+
+    res.status(200).json({ message: 'Comment updated successfully.', post });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to update comment.' });
   }
 };
 

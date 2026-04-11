@@ -3,19 +3,31 @@
 
 /* ── VARIABLES ──────────────────────────────────────────────── */
 :root {
-    --bg: #0d1117;
-    --bg2: #161b22;
-    --bg3: #21262d;
-    --border: rgba(255, 255, 255, 0.08);
-    --text: #e6edf3;
-    --text-muted: #7d8590;
-    --green: #10b981;
-    --green-dim: rgba(16, 185, 129, 0.15);
-    --blue: #3b82f6;
-    --blue-dim: rgba(59, 130, 246, 0.15);
-    --amber: #f59e0b;
+    --bg: #F3F4F6;
+    --bg2: #FFFFFF;
+    --bg3: #F0F1F3;
+    --border: rgba(0, 0, 0, 0.06);
+    --text: #1F2937;
+    --text-muted: #6B7280;
+    --primary: #19486A;
+    --primary-dim: rgba(25, 72, 106, 0.1);
+    --secondary: #3B82F6;
+    --secondary-dim: rgba(59, 130, 246, 0.1);
+    --accent: #22D3EE;
+    --accent-dim: rgba(34, 211, 238, 0.1);
+    --success: #10B981;
+    --success-dim: rgba(16, 185, 129, 0.1);
+    --danger: #EF4444;
     --radius: 14px;
-    --shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+    --shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
+    
+    /* Dark mode colors (unused by default, activated via JS) */
+    --ch-dark-bg: transparent;
+    --ch-dark-bg2: transparent;
+    --ch-dark-bg3: transparent;
+    --ch-dark-border: transparent;
+    --ch-dark-text: transparent;
+    --ch-dark-text-muted: transparent;
 }
 
 /* ── RESET ──────────────────────────────────────────────────── */
@@ -60,8 +72,8 @@
     font-size: 28px;
     width: 48px;
     height: 48px;
-    background: var(--green-dim);
-    border: 1px solid var(--green);
+    background: var(--primary-dim);
+    border: 1px solid var(--primary);
     border-radius: 12px;
     display: grid;
     place-items: center;
@@ -104,12 +116,12 @@
 }
 
 .ch-btn--primary {
-    background: var(--green);
+    background: var(--primary);
     color: #fff;
 }
 
 .ch-btn--primary:hover {
-    background: #059669;
+    background: #0F3B5B;
     transform: translateY(-1px);
 }
 
@@ -212,9 +224,9 @@
 }
 
 .ch-filter-btn.active {
-    background: var(--green-dim);
-    border-color: var(--green);
-    color: var(--green);
+    background: var(--primary-dim);
+    border-color: var(--primary);
+    color: var(--primary);
 }
 
 .ch-filter-count {
@@ -331,14 +343,14 @@
 }
 
 .ch-badge--partner {
-    background: var(--blue-dim);
-    color: var(--blue);
+    background: var(--secondary-dim);
+    color: var(--secondary);
     border: 1px solid rgba(59, 130, 246, 0.3);
 }
 
 .ch-badge--announce {
-    background: var(--green-dim);
-    color: var(--green);
+    background: var(--success-dim);
+    color: var(--success);
     border: 1px solid rgba(16, 185, 129, 0.3);
 }
 
@@ -454,7 +466,7 @@
 }
 
 .ch-input:focus {
-    border-color: var(--green);
+    border-color: var(--primary);
 }
 
 .ch-input::placeholder {
@@ -496,7 +508,7 @@
 }
 
 .ch-toggle__btn.active {
-    background: var(--green);
+    background: var(--primary);
     color: #fff;
 }
 
@@ -603,14 +615,14 @@
 }
 
 .ch-notif-item--unread {
-    background: rgba(16, 185, 129, 0.05);
+    background: var(--primary-dim);
 }
 
 .ch-notif-dot {
     width: 8px;
     height: 8px;
     border-radius: 50%;
-    background: var(--green);
+    background: var(--primary);
     margin-top: 5px;
     flex-shrink: 0;
     opacity: 0;
@@ -682,6 +694,17 @@
 .ch-empty-feed p {
     color: var(--text-muted);
     font-size: 15px;
+}
+
+/* ── DARK MODE ──────────────────────────────────────────────── */
+.ch-root--dark {
+    --bg: var(--ch-dark-bg, #0d1117);
+    --bg2: var(--ch-dark-bg2, #161b22);
+    --bg3: var(--ch-dark-bg3, #21262d);
+    --border: var(--ch-dark-border, rgba(255, 255, 255, 0.08));
+    --text: var(--ch-dark-text, #e6edf3);
+    --text-muted: var(--ch-dark-text-muted, #7d8590);
+    --primary-dim: rgba(16, 185, 129, 0.15);
 }
 
 /* ── RESPONSIVE ─────────────────────────────────────────────── */

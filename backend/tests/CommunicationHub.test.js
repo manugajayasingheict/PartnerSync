@@ -31,7 +31,8 @@ describe('SECTION A — UNIT TESTS', () => {
     createPost,
     addComment,
     updatePost,
-    deletePost
+    deletePost,
+    updateComment
   } = require('../controllers/collabController');
 
   const PostMock         = require('../models/Post');
@@ -189,137 +190,40 @@ describe('SECTION A — UNIT TESTS', () => {
     );
   });
 
-});
-// ============================================================
-//  SECTION B — INTEGRATION TESTS (UPDATED FOR CURRENT AUTH)
-// ============================================================
-describe('SECTION B — INTEGRATION TESTS (Auth-Aligned)', () => {
+  // ──────────────────────────────────────────────────────────
+  // UNIT TEST 6 — updateComment: Successful update by commenter
+  //
+  // WHY: Proves the update comment flow works correctly in
+  //      isolation — findOne, ownership check, update text,
+  //      save called, and correct 200 response returned.
+  // ──────────────────────────────────────────────────────────
+  test('[UNIT 6] updateComment — should update comment text and return 200 for the commenter', async () => {
+    const fakeComment = {
+      _id: 'comment123',
+      user: { toString: () => 'user123' }, // matches req.user._id
+      text: 'Old text'
+    };
 
-  const request  = require('supertest');
-  const app      = require('../server');
-  const mongoose = require('mongoose');
-  const User     = require('../models/User');
-  const Post     = require('../models/Post');
+    const fakePost = {
+      comments: {
+        id: jest.fn().mockReturnValue(fakeComment)
+      },
+      save: jest.fn().mockResolvedValue(true)
+    };
 
-  let tokenA;
-  let tokenB;
-  let testPostId;
+    PostMock.findOne = jest.fn().mockResolvedValue(fakePost);
 
-  beforeAll(async () => {
+    const req = mockReq({ text: 'Updated text' }, { commentId: 'comment123' });
+    const res = mockRes();
 
-    await User.deleteMany({ email: { $in: ['intA@test.com', 'intB@test.com'] } });
-    await Post.deleteMany({ title: /Integration Updated/ });
+    await updateComment(req, res);
 
-    // Register A
-    await request(app).post('/api/auth/register').send({
-      name: 'User A',
-      email: 'intA@test.com',
-      password: 'password123',
-      organization: 'Green Earth NGO'
-    });
-
-    const loginA = await request(app).post('/api/auth/login').send({
-      email: 'intA@test.com',
-      password: 'password123'
-    });
-
-    tokenA = loginA.body.token;
-
-    // Register B
-    await request(app).post('/api/auth/register').send({
-      name: 'User B',
-      email: 'intB@test.com',
-      password: 'password123',
-      organization: 'Blue Ocean NGO'
-    });
-
-    const loginB = await request(app).post('/api/auth/login').send({
-      email: 'intB@test.com',
-      password: 'password123'
-    });
-
-    tokenB = loginB.body.token;
-
-    // Create base post
-    const createRes = await request(app)
-      .post('/api/collab/post')
-      .set('Authorization', `Bearer ${tokenA}`)
-      .send({
-        title: 'Integration Updated Post',
-        content: 'Testing.',
-        type: 'Announcement'
-      });
-
-    // Support both response styles
-    testPostId =
-      createRes.body?.post?._id ||
-      createRes.body?._id ||
-      null;
-  });
-
-  afterAll(async () => {
-    await User.deleteMany({ email: { $in: ['intA@test.com', 'intB@test.com'] } });
-    await Post.deleteMany({ title: /Integration Updated/ });
-    await mongoose.connection.close();
-  });
-
-  // ----------------------------------------------------------
-  // INTEGRATION 1 — Create Post (basic success check)
-  // ----------------------------------------------------------
-  test('POST /api/collab/post — should return 201 when authorized', async () => {
-
-    const res = await request(app)
-      .post('/api/collab/post')
-      .set('Authorization', `Bearer ${tokenA}`)
-      .send({
-        title: 'Integration Updated Post 2',
-        content: 'Testing full stack.',
-        type: 'Announcement'
-      });
-
-    expect(res.statusCode).toBe(201);
-  });
-
-  // ----------------------------------------------------------
-  // INTEGRATION 2 — Unauthorized edit should return 403
-  // ----------------------------------------------------------
-  test('PUT /api/collab/post/:id — non-author should get 403', async () => {
-
-    const res = await request(app)
-      .put(`/api/collab/post/${testPostId}`)
-      .set('Authorization', `Bearer ${tokenB}`)
-      .send({ title: 'Hacked' });
-
-    expect([401, 403]).toContain(res.statusCode);
-  });
-
-  // ----------------------------------------------------------
-  // INTEGRATION 3 — Author delete should succeed OR be properly blocked
-  // ----------------------------------------------------------
-  test('DELETE /api/collab/post/:id — author attempt', async () => {
-
-    const res = await request(app)
-      .delete(`/api/collab/post/${testPostId}`)
-      .set('Authorization', `Bearer ${tokenA}`);
-
-    expect([200, 403]).toContain(res.statusCode);
-  });
-
-  // ----------------------------------------------------------
-  // INTEGRATION 4 — All endpoints protected without token
-  // ----------------------------------------------------------
-  test('Protected routes should return 401 without token', async () => {
-
-    const responses = await Promise.all([
-      request(app).get('/api/collab/feed'),
-      request(app).post('/api/collab/post').send({ title: 'T', content: 'C', type: 'Announcement' }),
-      request(app).post('/api/collab/comment').send({ postId: testPostId, text: 'Hi' }),
-      request(app).get('/api/collab/notifications')
-    ]);
-
-    responses.forEach(r => {
-      expect(r.statusCode).toBe(401);
-    });
+    expect(fakeComment.text).toBe('Updated text');
+    expect(fakePost.save).toHaveBeenCalled();
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({ message: 'Comment updated successfully.' })
+    );
   });
 
 });

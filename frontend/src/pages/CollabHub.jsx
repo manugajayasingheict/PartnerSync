@@ -73,10 +73,20 @@ const IconTrash = () => (
     <path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/>
   </svg>
 );
+const IconMoon = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+  </svg>
+);
+const IconSun = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+  </svg>
+);
 
 // ── AVATAR ───────────────────────────────────────────────────
 const Avatar = ({ name, size = 40 }) => {
-  const url = `https://api.dicebear.com/9.x/initials/svg?seed=${encodeURIComponent(name || 'User')}&backgroundColor=10b981,3b82f6,8b5cf6,f59e0b,ef4444&backgroundType=gradientLinear`;
+  const url = `https://api.dicebear.com/9.x/initials/svg?seed=${encodeURIComponent(name || 'User')}&backgroundColor=19486A,3B82F6,22D3EE,10B981,EF4444&backgroundType=gradientLinear`;
   return (
     <img
       src={url}
@@ -424,6 +434,10 @@ export default function CollabHub() {
   const [notifCount, setNotifCount] = useState(0);
   const [filter, setFilter] = useState('All');
   const [currentUserId, setCurrentUserId] = useState(null);
+  const [darkMode, setDarkMode] = useState(() => {
+    const saved = localStorage.getItem('collabHubDarkMode');
+    return saved ? JSON.parse(saved) : false;
+  });
 
   // Get logged in user id from localStorage
   useEffect(() => {
@@ -433,6 +447,27 @@ export default function CollabHub() {
       setCurrentUserId(parsed._id || parsed.id);
     }
   }, []);
+
+  // Persist dark mode preference and apply CSS overrides
+  useEffect(() => {
+    localStorage.setItem('collabHubDarkMode', JSON.stringify(darkMode));
+    
+    if (darkMode) {
+      document.documentElement.style.setProperty('--ch-dark-bg', '#0d1117');
+      document.documentElement.style.setProperty('--ch-dark-bg2', '#161b22');
+      document.documentElement.style.setProperty('--ch-dark-bg3', '#21262d');
+      document.documentElement.style.setProperty('--ch-dark-border', 'rgba(255, 255, 255, 0.08)');
+      document.documentElement.style.setProperty('--ch-dark-text', '#e6edf3');
+      document.documentElement.style.setProperty('--ch-dark-text-muted', '#7d8590');
+    } else {
+      document.documentElement.style.removeProperty('--ch-dark-bg');
+      document.documentElement.style.removeProperty('--ch-dark-bg2');
+      document.documentElement.style.removeProperty('--ch-dark-bg3');
+      document.documentElement.style.removeProperty('--ch-dark-border');
+      document.documentElement.style.removeProperty('--ch-dark-text');
+      document.documentElement.style.removeProperty('--ch-dark-text-muted');
+    }
+  }, [darkMode]);
 
   const loadFeed = useCallback(async () => {
     setLoading(true);
@@ -465,7 +500,7 @@ export default function CollabHub() {
   const filtered = filter === 'All' ? feed : feed.filter((p) => p.type === filter);
 
   return (
-    <div className="ch-root">
+    <div className={`ch-root ${darkMode ? 'ch-root--dark' : ''}`}>
       {/* ── HEADER ── */}
       <header className="ch-header">
         <div className="ch-header__left">
@@ -480,12 +515,20 @@ export default function CollabHub() {
             <button
               className="ch-icon-btn ch-icon-btn--notif"
               onClick={() => { setShowNotifs(!showNotifs); setNotifCount(0); }}
+              title="Notifications"
             >
               <IconBell />
               {notifCount > 0 && <span className="ch-badge-dot">{notifCount}</span>}
             </button>
             {showNotifs && <NotificationsPanel onClose={() => setShowNotifs(false)} />}
           </div>
+          <button
+            className="ch-icon-btn"
+            onClick={() => setDarkMode(!darkMode)}
+            title={darkMode ? 'Light Mode' : 'Dark Mode'}
+          >
+            {darkMode ? <IconSun /> : <IconMoon />}
+          </button>
           <button className="ch-btn ch-btn--primary" onClick={() => setShowCreate(true)}>
             <IconPlus /> New Post
           </button>
