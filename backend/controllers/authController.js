@@ -2,6 +2,7 @@ const User = require('../models/User');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const asyncHandler = require('express-async-handler');
+const Notification = require('../models/Notification');
 
 // Helper function to sign JWT
 const sendTokenResponse = (user, statusCode, res) => {
@@ -42,6 +43,11 @@ exports.register = asyncHandler(async (req, res) => {
     isVerified: role === 'admin' ? true : false,
   });
 
+  await Notification.create({
+    recipient: user._id,
+    message: `Welcome to PartnerSync, ${user.name}! Start by creating your first post in the Communication Hub.`
+  });
+
   sendTokenResponse(user, 201, res);
 });
 
@@ -78,7 +84,6 @@ exports.login = asyncHandler(async (req, res) => {
   sendTokenResponse(user, 200, res);
 });
 
-// @desc    Approve a user (Admin only)
 exports.approveUser = asyncHandler(async (req, res) => {
   const user = await User.findById(req.params.id);
   if (!user) {
@@ -88,6 +93,12 @@ exports.approveUser = asyncHandler(async (req, res) => {
   user.role = user.requestedRole || 'partner';
   user.isVerified = true;
   await user.save();
+
+  await Notification.create({
+    recipient: user._id,
+    message: `Your account has been approved! You now have ${user.role} access.`
+  });
+
   res.status(200).json({ success: true, data: user });
 });
 

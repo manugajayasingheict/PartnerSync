@@ -15,12 +15,11 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 
-// ── Routes ───────────────────────────────────────────────────
-app.use('/api/auth',     require('./routes/authRoutes'));     
-app.use('/api/sdg',      require('./routes/sdgRoutes'));      
-app.use('/api/projects', require('./routes/projectRoutes')); 
-app.use('/api/reports',  require('./routes/reportRoutes'));   
-app.use('/api/collab',   require('./routes/collabRoutes'));   
+app.use('/api/auth',     require('./routes/authRoutes'));
+app.use('/api/sdg',      require('./routes/sdgRoutes'));
+app.use('/api/projects', require('./routes/projectRoutes'));
+app.use('/api/reports',  require('./routes/reportRoutes'));
+app.use('/api/collab',   require('./routes/collabRoutes'));
 
 // Root Route
 app.get('/', (req, res) => {
