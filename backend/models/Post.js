@@ -4,7 +4,7 @@ const postSchema = new mongoose.Schema({
   author: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   authorName: { type: String, required: true },
   organization: { type: String, required: true },
-  avatarUrl: { type: String }, // This will hold the DiceBear API link
+  avatarUrl: { type: String },
   title: { type: String, required: true },
   content: { type: String, required: true },
   type: { type: String, enum: ['Call for Partnership', 'Announcement'], default: 'Announcement' },

@@ -1,7 +1,5 @@
-/* ── FONTS ──────────────────────────────────────────────────── */
 @import url('https://fonts.googleapis.com/css2?family=Fraunces:wght@400;600;700&family=DM+Sans:wght@300;400;500;600&display=swap');
 
-/* ── VARIABLES ──────────────────────────────────────────────── */
 :root {
     --bg: #F3F4F6;
     --bg2: #FFFFFF;
@@ -20,7 +18,7 @@
     --danger: #EF4444;
     --radius: 14px;
     --shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
-    
+
     /* Dark mode colors (unused by default, activated via JS) */
     --ch-dark-bg: transparent;
     --ch-dark-bg2: transparent;
@@ -30,7 +28,6 @@
     --ch-dark-text-muted: transparent;
 }
 
-/* ── RESET ──────────────────────────────────────────────────── */
 *,
 *::before,
 *::after {
@@ -39,7 +36,6 @@
     padding: 0;
 }
 
-/* ── ROOT ───────────────────────────────────────────────────── */
 .ch-root {
     min-height: 100vh;
     background: var(--bg);
@@ -48,7 +44,6 @@
     padding-bottom: 60px;
 }
 
-/* ── HEADER ─────────────────────────────────────────────────── */
 .ch-header {
     display: flex;
     align-items: center;
@@ -99,7 +94,6 @@
     gap: 12px;
 }
 
-/* ── BUTTONS ────────────────────────────────────────────────── */
 .ch-btn {
     display: inline-flex;
     align-items: center;
@@ -174,7 +168,6 @@
     color: var(--text);
 }
 
-/* ── NOTIFICATION BADGE ─────────────────────────────────────── */
 .ch-notif-wrap {
     position: relative;
 }
@@ -195,7 +188,6 @@
     border: 2px solid var(--bg2);
 }
 
-/* ── FILTERS ────────────────────────────────────────────────── */
 .ch-filters {
     display: flex;
     align-items: center;
@@ -235,7 +227,6 @@
     color: var(--text-muted);
 }
 
-/* ── FEED ───────────────────────────────────────────────────── */
 .ch-feed {
     max-width: 720px;
     margin: 28px auto;
@@ -245,7 +236,6 @@
     gap: 16px;
 }
 
-/* ── POST CARD ──────────────────────────────────────────────── */
 .ch-card {
     background: var(--bg2);
     border: 1px solid var(--border);
@@ -333,7 +323,6 @@
     gap: 8px;
 }
 
-/* ── BADGES ─────────────────────────────────────────────────── */
 .ch-badge {
     font-size: 11px;
     font-weight: 600;
@@ -354,7 +343,6 @@
     border: 1px solid rgba(16, 185, 129, 0.3);
 }
 
-/* ── MODAL OVERLAY ──────────────────────────────────────────── */
 .ch-overlay {
     position: fixed;
     inset: 0;
@@ -439,7 +427,6 @@
     gap: 10px;
 }
 
-/* ── FORM FIELDS ────────────────────────────────────────────── */
 .ch-field {
     display: flex;
     flex-direction: column;
@@ -483,7 +470,6 @@
     color: #ef4444;
 }
 
-/* ── TOGGLE ─────────────────────────────────────────────────── */
 .ch-toggle {
     display: flex;
     background: var(--bg3);
@@ -512,7 +498,6 @@
     color: #fff;
 }
 
-/* ── COMMENTS ───────────────────────────────────────────────── */
 .ch-comments-list {
     max-height: 340px;
     overflow-y: auto;
@@ -567,7 +552,6 @@
     align-items: center;
 }
 
-/* ── NOTIFICATIONS PANEL ────────────────────────────────────── */
 .ch-notif-panel {
     position: absolute;
     top: 48px;
@@ -643,7 +627,6 @@
     color: var(--text-muted);
 }
 
-/* ── SKELETONS ──────────────────────────────────────────────── */
 .ch-loading {
     display: flex;
     flex-direction: column;
@@ -670,7 +653,6 @@
     }
 }
 
-/* ── EMPTY STATES ───────────────────────────────────────────── */
 .ch-empty {
     text-align: center;
     color: var(--text-muted);
@@ -696,7 +678,6 @@
     font-size: 15px;
 }
 
-/* ── DARK MODE ──────────────────────────────────────────────── */
 .ch-root--dark {
     --bg: var(--ch-dark-bg, #0d1117);
     --bg2: var(--ch-dark-bg2, #161b22);
@@ -707,7 +688,6 @@
     --primary-dim: rgba(16, 185, 129, 0.15);
 }
 
-/* ── RESPONSIVE ─────────────────────────────────────────────── */
 @media (max-width: 600px) {
     .ch-header {
         padding: 14px 16px;

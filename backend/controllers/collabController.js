@@ -12,7 +12,6 @@ exports.createPost = async (req, res) => {
       return res.status(400).json({ error: 'Title, content, and type are required.' });
     }
 
-    // 🎨 DiceBear External API — generates avatar from org name, no API key needed
     const orgName = req.user.organization || req.user.name;
     const avatarUrl = `https://api.dicebear.com/9.x/initials/svg?seed=${encodeURIComponent(orgName)}`;
 
@@ -66,12 +65,25 @@ exports.addComment = async (req, res) => {
 
     await post.save();
 
-    // 🔔 Auto-notify post author (skip if commenting on own post)
     if (post.author.toString() !== req.user._id.toString()) {
       await Notification.create({
         recipient: post.author,
-        message: `${req.user.name} offered help on your post: "${post.title}"`
+        message: `${req.user.name} commented on your post: "${post.title}"`
       });
+    }
+
+    const otherCommenters = post.comments
+      .filter(comment => comment.user.toString() !== req.user._id.toString())
+      .map(comment => comment.user.toString())
+      .filter((userId, index, arr) => arr.indexOf(userId) === index);
+
+    for (const commenterId of otherCommenters) {
+      if (commenterId !== post.author.toString()) {
+        await Notification.create({
+          recipient: commenterId,
+          message: `${req.user.name} also commented on "${post.title}"`
+        });
+      }
     }
 
     res.status(201).json({ message: 'Comment added successfully', post });
@@ -112,13 +124,11 @@ exports.updateComment = async (req, res) => {
   }
 };
 
-// 4. GET /api/collab/notifications – Fetch Alerts
 exports.getNotifications = async (req, res) => {
   try {
     const notifications = await Notification.find({ recipient: req.user._id })
       .sort({ createdAt: -1 });
 
-    // ✅ Mark all as read after fetching
     await Notification.updateMany(
       { recipient: req.user._id, isRead: false },
       { $set: { isRead: true } }
@@ -130,7 +140,35 @@ exports.getNotifications = async (req, res) => {
   }
 };
 
-// 5. PUT /api/collab/post/:id – Update an existing post
+exports.createAnnouncement = async (req, res) => {
+  try {
+    const { message } = req.body;
+
+    if (!message) {
+      return res.status(400).json({ error: 'Message is required.' });
+    }
+
+    // Only admins can create announcements (assuming role-based auth)
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({ error: 'Only admins can create announcements.' });
+    }
+
+    const User = require('../models/User');
+    const allUsers = await User.find({}, '_id');
+
+    const notifications = allUsers.map(user => ({
+      recipient: user._id,
+      message: `System Announcement: ${message}`
+    }));
+
+    await Notification.insertMany(notifications);
+
+    res.status(201).json({ message: 'Announcement sent to all users.' });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to create announcement.' });
+  }
+};
+
 exports.updatePost = async (req, res) => {
   try {
     const { title, content, type } = req.body;
@@ -155,7 +193,6 @@ exports.updatePost = async (req, res) => {
   }
 };
 
-// 6. DELETE /api/collab/post/:id – Delete a post
 exports.deletePost = async (req, res) => {
   try {
     const post = await Post.findById(req.params.id);
