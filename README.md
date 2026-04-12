@@ -650,9 +650,37 @@ Success response (200):
 ]
 ```
 
+### POST /api/collab/post
+
+- Auth: Bearer token required
+- Purpose: Create collaboration post
+
+Request body:
+
+```json
+{
+	"title": "Seeking WASH partners in Kandy",
+	"content": "Looking for field implementation partners.",
+	"type": "Call for Partnership"
+}
+```
+
+Success response (201):
+
+```json
+{
+	"message": "Post created successfully",
+	"post": {
+		"_id": "<post_id>",
+		"title": "Seeking WASH partners in Kandy",
+		"type": "Call for Partnership"
+	}
+}
+```
+
 ### POST /api/collab/comment
 
-- Auth: Public (current route configuration)
+- Auth: Bearer token required
 - Purpose: Add comment on post
 
 Request body:
@@ -683,7 +711,7 @@ Success response (201):
 
 ### PUT /api/collab/comment/:commentId
 
-- Auth: Public (current route configuration)
+- Auth: Bearer token required
 - Purpose: Update comment text by comment ID
 
 Request body:
@@ -696,25 +724,25 @@ Request body:
 
 ### GET /api/collab/notifications
 
-- Auth: Public (current route configuration)
+- Auth: Bearer token required
 - Purpose: Retrieve notifications for current user
 
 ### PUT /api/collab/post/:id
 
-- Auth: Public (current route configuration)
-- Access: post owner only (controller-level check)
+- Auth: Bearer token required
+- Access: post owner only
 - Purpose: Update post
 
 ### DELETE /api/collab/post/:id
 
-- Auth: Public (current route configuration)
-- Access: post owner only (controller-level check)
+- Auth: Bearer token required
+- Access: post owner only
 - Purpose: Delete post
 
 ### POST /api/collab/announcement
 
-- Auth: Public (current route configuration)
-- Access: admin only (controller-level check)
+- Auth: Bearer token required
+- Access: admin only
 - Purpose: Broadcast announcement to all users
 
 Request body:
@@ -792,6 +820,12 @@ Frontend (Vercel):
 
 ```env
 REACT_APP_API_BASE_URL=https://partnersync-backend-c9aj.onrender.com
+```
+
+Frontend local development example:
+
+```env
+REACT_APP_API_BASE_URL=http://localhost:5000
 ```
 
 ## 8.3 Build and Start Commands Used

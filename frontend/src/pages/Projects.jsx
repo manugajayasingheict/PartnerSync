@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FaPlus, FaLeaf, FaEdit, FaTrash, FaTimes, FaDollarSign, FaSearch, FaFilePdf, FaArrowRight } from 'react-icons/fa';
 import jsPDF from 'jspdf'; // Import PDF Library
+import { API_BASE_URL } from '../config/api';
 
 const Projects = () => {
   const navigate = useNavigate();
@@ -46,7 +47,7 @@ const Projects = () => {
   // 1. Fetch Projects (Internal API)
   const fetchProjects = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/projects');
+      const response = await fetch(`${API_BASE_URL}/api/projects`);
       const data = await response.json();
       if (data.success) {
         setProjects(data.data);
@@ -76,8 +77,8 @@ const Projects = () => {
     try {
       const method = editId ? 'PUT' : 'POST';
       const url = editId 
-        ? `http://localhost:5000/api/projects/${editId}` 
-        : 'http://localhost:5000/api/projects';
+        ? `${API_BASE_URL}/api/projects/${editId}` 
+        : `${API_BASE_URL}/api/projects`;
 
       const response = await fetch(url, {
         method: method,
@@ -125,7 +126,7 @@ const Projects = () => {
   const handleDelete = async (id) => {
     if (!window.confirm("Are you sure? Only Admin can perform this action.")) return;
     try {
-        await fetch(`http://localhost:5000/api/projects/${id}`, { 
+        await fetch(`${API_BASE_URL}/api/projects/${id}`, { 
             method: 'DELETE',
             headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
         });

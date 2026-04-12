@@ -19,7 +19,19 @@ const app = express();
 
 // ── Middleware ───────────────────────────────────────────────
 app.use(express.json());
-app.use(cors());
+
+// Modified CORS for Production
+app.use(cors({
+  origin: [
+    "https://partner-sync.vercel.app", 
+    "https://partner-sync-chi.vercel.app",
+    "https://partner-sync-9rrvglou5-manugajayasingheicts-projects.vercel.app",
+    "http://localhost:5173", // Keep for local development (Vite default)
+    "http://localhost:3000"  // Keep for local development (CRA default)
+  ],
+  methods: ["GET", "POST", "PUT", "DELETE"],
+  credentials: true
+}));
 
 // API documentation
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
@@ -47,4 +59,5 @@ if (process.env.NODE_ENV !== 'test') {
   });
 }
 
+module.exports = app;   // ← Required for supertest in tests
 module.exports = app;

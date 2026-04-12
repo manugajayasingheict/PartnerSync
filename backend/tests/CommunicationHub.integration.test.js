@@ -171,7 +171,7 @@ describe('SECTION B — INTEGRATION TESTS (Auth-Aligned)', () => {
   });
 
   // ----------------------------------------------------------
-  // INTEGRATION 4 — All endpoints protected without token
+  // INTEGRATION 4 — Protected routes should reject without token
   // ----------------------------------------------------------
   test('Protected routes should return 401 without token', async () => {
 
@@ -182,9 +182,11 @@ describe('SECTION B — INTEGRATION TESTS (Auth-Aligned)', () => {
       request(app).get('/api/collab/notifications')
     ]);
 
-    responses.forEach(r => {
-      expect(r.statusCode).toBe(401);
-    });
+    // Feed is public, while write/notification routes are protected.
+    expect(responses[0].statusCode).toBe(200);
+    expect(responses[1].statusCode).toBe(401);
+    expect(responses[2].statusCode).toBe(401);
+    expect(responses[3].statusCode).toBe(401);
   });
 
 });

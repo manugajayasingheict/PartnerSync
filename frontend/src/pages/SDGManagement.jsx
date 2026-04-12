@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import './SDGManagement.css';
+import { API_BASE_URL } from '../config/api';
 
-const API_URL = 'http://localhost:5000/api/sdg';
+const API_URL = `${API_BASE_URL}/api/sdg`;
 
 const SDGManagement = () => {
   const [sdgs, setSdgs] = useState([]);

@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import './SDGDropdown.css';
+import { API_BASE_URL } from '../config/api';
 
-const API_URL = 'http://localhost:5000/api/sdg';
+const API_URL = `${API_BASE_URL}/api/sdg`;
 
 const SDGDropdown = ({ selectedSDG, onSelect, label = "Select SDG Target", required = false }) => {
   const [sdgs, setSdgs] = useState([]);

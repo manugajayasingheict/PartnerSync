@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { FaGlobeAsia, FaHandshake, FaCheckCircle, FaSpinner, FaUserCircle, FaSignOutAlt, FaUserShield, FaBullseye } from 'react-icons/fa';
+import { API_BASE_URL } from '../config/api';
 
 const Home = () => {
   const [stats, setStats] = useState({
@@ -24,7 +25,7 @@ const Home = () => {
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const response = await fetch('http://localhost:5000/api/projects');
+        const response = await fetch(`${API_BASE_URL}/api/projects`);
         const data = await response.json();
         
         if (data.success) {

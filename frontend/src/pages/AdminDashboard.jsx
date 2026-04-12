@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { FaCheck, FaUserShield, FaClock, FaTrash, FaSyncAlt, FaSpinner } from 'react-icons/fa';
+import { API_BASE_URL } from '../config/api';
 
 const AdminDashboard = () => {
   const [users, setUsers] = useState([]);
@@ -15,7 +16,7 @@ const AdminDashboard = () => {
       // Added console log to see exactly what the backend sends
       console.log("Fetching users with token:", token);
       
-      const res = await axios.get('http://localhost:5000/api/auth/users', {
+      const res = await axios.get(`${API_BASE_URL}/api/auth/users`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       
@@ -39,7 +40,7 @@ const AdminDashboard = () => {
   const handleApprove = async (id) => {
     try {
       const token = localStorage.getItem('token');
-      await axios.put(`http://localhost:5000/api/auth/approve/${id}`, {}, {
+      await axios.put(`${API_BASE_URL}/api/auth/approve/${id}`, {}, {
         headers: { Authorization: `Bearer ${token}` }
       });
       alert('User Approved!');
@@ -53,7 +54,7 @@ const AdminDashboard = () => {
     if (!window.confirm("Delete this user?")) return;
     try {
       const token = localStorage.getItem('token');
-      await axios.delete(`http://localhost:5000/api/auth/users/${id}`, {
+      await axios.delete(`${API_BASE_URL}/api/auth/users/${id}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       alert('User Deleted');

@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import './CollabHub.css';
+import { API_BASE_URL } from '../config/api';
 
-const API_BASE = 'http://localhost:5000/api';
+const API_BASE = `${API_BASE_URL}/api`;
 
 const getToken = () => localStorage.getItem('token');
 
