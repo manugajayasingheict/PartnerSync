@@ -4,11 +4,12 @@ const collabController = require('../controllers/collabController');
 const { protect } = require('../middleware/authMiddleware');
 
 router.get('/feed', collabController.getFeed);
-router.post('/comment', collabController.addComment);
-router.put('/comment/:commentId', collabController.updateComment);
-router.get('/notifications', collabController.getNotifications);
-router.put('/post/:id',    collabController.updatePost);
-router.delete('/post/:id', collabController.deletePost);
-router.post('/announcement', collabController.createAnnouncement);
+router.post('/post', protect, collabController.createPost);
+router.post('/comment', protect, collabController.addComment);
+router.put('/comment/:commentId', protect, collabController.updateComment);
+router.get('/notifications', protect, collabController.getNotifications);
+router.put('/post/:id', protect, collabController.updatePost);
+router.delete('/post/:id', protect, collabController.deletePost);
+router.post('/announcement', protect, collabController.createAnnouncement);
 
 module.exports = router;
