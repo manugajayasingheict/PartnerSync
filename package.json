@@ -1,0 +1,27 @@
+{
+  "name": "partnersync",
+  "version": "1.0.0",
+  "description": "\"MERN Stack Project for NGO/Government SDG Visualization \"",
+  "main": "index.js",
+  "dependencies": {
+    "playwright": "^1.58.2",
+    "playwright-core": "^1.58.2",
+    "undici-types": "^7.18.2"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.58.2",
+    "@types/node": "^25.3.5"
+  },
+  "scripts": {},
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/manugajayasingheict/PartnerSync.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/manugajayasingheict/PartnerSync/issues"
+  },
+  "homepage": "https://github.com/manugajayasingheict/PartnerSync#readme"
+}

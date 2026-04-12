@@ -40,8 +40,8 @@ const ProjectSchema = new mongoose.Schema({
     },
     budget: {
         type: Number,
-        required: false,
-        min: [0, 'Project budget cannot be a negative value']
+        // 🛡️ Updated to match test expectation: "cannot be negative"
+        min: [0, 'Project budget cannot be negative'] 
     },
     startDate: {
         type: Date,
