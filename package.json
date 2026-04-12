@@ -1,4 +1,5 @@
 {
+<<<<<<< Updated upstream
   "name": "partnersync",
   "version": "1.0.0",
   "description": "\"MERN Stack Project for NGO/Government SDG Visualization \"",
@@ -24,4 +25,9 @@
     "url": "https://github.com/manugajayasingheict/PartnerSync/issues"
   },
   "homepage": "https://github.com/manugajayasingheict/PartnerSync#readme"
+=======
+  "devDependencies": {
+    "@playwright/test": "^1.58.2"
+  }
+>>>>>>> Stashed changes
 }
