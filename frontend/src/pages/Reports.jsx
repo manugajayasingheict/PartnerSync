@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FaChartLine, FaDollarSign, FaUsers, FaTimes, FaSpinner, FaMoneyBillWave, FaClipboardList, FaExclamationTriangle, FaArrowRight, FaChevronLeft, FaChevronRight } from 'react-icons/fa';
 import axios from 'axios';
+import { API_BASE_URL } from '../config/api';
 
 const Reports = () => {
   const navigate = useNavigate();
@@ -41,7 +42,7 @@ const Reports = () => {
   const fetchStats = async () => {
     try {
       setErrors(prev => ({ ...prev, stats: null })); // Clear previous errors
-      const response = await axios.get('http://localhost:5000/api/reports/stats/summary');
+      const response = await axios.get(`${API_BASE_URL}/api/reports/stats/summary`);
       if (response.data.success) {
         setStats(response.data.data);
       }
@@ -59,7 +60,7 @@ const Reports = () => {
   const fetchOrganizations = async () => {
     try {
       setErrors(prev => ({ ...prev, organizations: null }));
-      const response = await axios.get('http://localhost:5000/api/projects/organizations');
+      const response = await axios.get(`${API_BASE_URL}/api/projects/organizations`);
       if (response.data.success) {
         setOrganizations(response.data.data);
       }
@@ -80,7 +81,7 @@ const Reports = () => {
       if (filters.status) queryString += `&status=${encodeURIComponent(filters.status)}`;
       if (filters.organization) queryString += `&organization=${encodeURIComponent(filters.organization)}`;
       
-      const response = await axios.get(`http://localhost:5000/api/projects/with-stats?${queryString}`);
+      const response = await axios.get(`${API_BASE_URL}/api/projects/with-stats?${queryString}`);
       if (response.data.success) {
         setProjectsWithStats(response.data.data);
         setCurrentPage(response.data.page);

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom'; // Import useNavigate
 import { FaEnvelope, FaLock, FaSignInAlt } from 'react-icons/fa';
 import axios from 'axios'; // Import Axios
+import { API_BASE_URL } from '../config/api';
 
 const Login = () => {
   const [formData, setFormData] = useState({ email: '', password: '' });
@@ -14,7 +15,7 @@ const Login = () => {
 
     try {
       // 1. Send data to Backend
-      const res = await axios.post('http://localhost:5000/api/auth/login', formData);
+      const res = await axios.post(`${API_BASE_URL}/api/auth/login`, formData);
 
       // 2. Save the Token (The "Key")
       localStorage.setItem('token', res.data.token);

@@ -3,6 +3,7 @@ import { useParams } from 'react-router-dom';
 import { FaChartLine, FaDollarSign, FaUsers, FaMoneyBillWave, FaClipboardList, FaTrash, FaEdit, FaTimes, FaSpinner, FaExclamationTriangle, FaCheckCircle, FaPlus, FaFilePdf } from 'react-icons/fa';
 import axios from 'axios';
 import jsPDF from 'jspdf';
+import { API_BASE_URL } from '../config/api';
 
 const ProjectDetails = () => {
   const { id } = useParams();
@@ -51,9 +52,9 @@ const ProjectDetails = () => {
     try {
       // Parallel API calls
       const [projectRes, statsRes, reportsRes] = await Promise.all([
-        axios.get(`http://localhost:5000/api/projects/${id}`),
-        axios.get(`http://localhost:5000/api/projects/${id}/statistics`),
-        axios.get(`http://localhost:5000/api/reports/project/${id}`)
+        axios.get(`${API_BASE_URL}/api/projects/${id}`),
+        axios.get(`${API_BASE_URL}/api/projects/${id}/statistics`),
+        axios.get(`${API_BASE_URL}/api/reports/project/${id}`)
       ]);
 
       if (projectRes.data.success) setProject(projectRes.data.data);
@@ -112,7 +113,7 @@ const ProjectDetails = () => {
     try {
       const token = localStorage.getItem('token');
       const response = await axios.post(
-        'http://localhost:5000/api/reports',
+        `${API_BASE_URL}/api/reports`,
         { ...formData, project: id },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -148,7 +149,7 @@ const ProjectDetails = () => {
     try {
       const token = localStorage.getItem('token');
       await axios.delete(
-        `http://localhost:5000/api/reports/${reportId}`,
+        `${API_BASE_URL}/api/reports/${reportId}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       
@@ -184,7 +185,7 @@ const ProjectDetails = () => {
     try {
       const token = localStorage.getItem('token');
       const response = await axios.put(
-        `http://localhost:5000/api/reports/${reportId}`,
+        `${API_BASE_URL}/api/reports/${reportId}`,
         editForm,
         { headers: { Authorization: `Bearer ${token}` } }
       );

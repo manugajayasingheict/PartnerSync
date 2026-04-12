@@ -44,6 +44,8 @@ Located in backend/tests:
 - project.test.js
 - Report.test.js
 - reportController.test.js
+- CommunicationHub.test.js
+- CommunicationHub.integration.test.js
 
 ## 3. How To Run Unit Tests
 
@@ -116,12 +118,12 @@ These are test/data-contract alignment issues, not test-runner setup issues.
 
 ## 4.3 Optional UI Integration/E2E Baseline
 
-A Playwright config exists at workspace root, but there are currently no Playwright spec files in the configured test directory.
+Playwright tests are available in the frontend workspace.
 
-If you add Playwright tests:
+Run Playwright tests:
 
 ```bash
-cd /Users/savindi/Documents/AF Project
+cd frontend
 npx playwright test
 ```
 

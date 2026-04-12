@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { FaUser, FaEnvelope, FaLock, FaUserPlus, FaBuilding, FaUserTag } from 'react-icons/fa';
 import axios from 'axios';
+import { API_BASE_URL } from '../config/api';
 
 const Signup = () => {
   const [formData, setFormData] = useState({ 
@@ -20,7 +21,7 @@ const Signup = () => {
 
     try {
       // This sends name, email, password, organization, AND role to your backend
-      const res = await axios.post('http://localhost:5000/api/auth/register', formData);
+      const res = await axios.post(`${API_BASE_URL}/api/auth/register`, formData);
       
       localStorage.setItem('token', res.data.token);
       localStorage.setItem('user', JSON.stringify(res.data.user));

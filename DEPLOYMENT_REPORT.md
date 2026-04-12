@@ -56,6 +56,12 @@ Recommended environment variable:
 REACT_APP_API_BASE_URL=https://partnersync-backend-c9aj.onrender.com
 ```
 
+Local development example:
+
+```env
+REACT_APP_API_BASE_URL=http://localhost:5000
+```
+
 ## 4. Production Validation
 
 ## 4.1 API Reachability
@@ -76,6 +82,13 @@ REACT_APP_API_BASE_URL=https://partnersync-backend-c9aj.onrender.com
 3. Call public project and report endpoints.
 4. Perform one protected write operation with JWT.
 5. Verify collaboration feed access.
+
+## 4.4 CORS Validation
+
+Confirm backend CORS allowlist includes active frontend domains:
+
+- https://partner-sync-chi.vercel.app
+- https://partner-sync.vercel.app
 
 ## 5. Known Deployment Considerations
 
