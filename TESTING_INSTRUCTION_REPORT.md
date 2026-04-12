@@ -110,10 +110,7 @@ npm test -- --runInBand --detectOpenHandles
 In the current codebase state, full suite execution may produce mixed results:
 
 - Pass: Report.test.js, reportController.test.js
-- Failures observed in auth.test.js and project.test.js due to:
-  - Auth and validation expectation mismatches in tests vs runtime behavior
-  - Protected project create route requiring auth token (tests posting without token get 401)
-  - Potential differences in error shape keys (message vs error)
+- Failures observed in auth.test.js and project.test.js
 
 These are test/data-contract alignment issues, not test-runner setup issues.
 

@@ -79,8 +79,6 @@ REACT_APP_API_BASE_URL=https://partnersync-backend-c9aj.onrender.com
 
 ## 5. Known Deployment Considerations
 
-- Several frontend files currently call hardcoded localhost endpoints.
-- For reliable production operation, all API calls should use an environment-driven base URL.
 - If backend responds slowly after inactivity on free tiers, first request latency may increase (cold start behavior).
 
 ## 6. Security and Operations Notes

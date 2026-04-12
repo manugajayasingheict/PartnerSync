@@ -7,8 +7,7 @@ This documentation covers:
 - Complete API endpoint documentation
 - Authentication and authorization requirements
 - Request and response formats with examples
-
-Deployment details are intentionally deferred in this version.
+- Deployment report and production URLs
 
 ## 1. Tech Stack
 
@@ -135,7 +134,10 @@ Authorization: Bearer <token>
 - Protected (authenticated user):
 	- PUT /api/reports/:id (owner or admin)
 	- DELETE /api/reports/:id (owner or admin)
-	- All /api/collab/* routes
+
+- Collaboration routes note:
+	- Current route configuration does not apply auth middleware at route level for `/api/collab/*`.
+	- Some collaboration actions still perform controller-level user/role checks and may fail without user context.
 
 ## 5. API Endpoint Documentation
 
@@ -628,41 +630,11 @@ Example response (200):
 
 ## 5.6 Collaboration Endpoints
 
-All collaboration endpoints require authentication.
-
-### POST /api/collab/post
-
-- Auth: Bearer token required
-- Purpose: Create collaboration post
-
-Request body:
-
-```json
-{
-	"title": "Seeking WASH partners in Kandy",
-	"content": "Looking for field implementation partners.",
-	"type": "Call for Partnership"
-}
-```
-
-Success response (201):
-
-```json
-{
-	"message": "Post created successfully",
-	"post": {
-		"_id": "<post_id>",
-		"authorName": "Jane Doe",
-		"organization": "NGO Lanka",
-		"title": "Seeking WASH partners in Kandy",
-		"type": "Call for Partnership"
-	}
-}
-```
+The currently exposed collaboration routes are listed below.
 
 ### GET /api/collab/feed
 
-- Auth: Bearer token required
+- Auth: Public (current route configuration)
 - Purpose: Get post feed
 
 Success response (200):
@@ -680,7 +652,7 @@ Success response (200):
 
 ### POST /api/collab/comment
 
-- Auth: Bearer token required
+- Auth: Public (current route configuration)
 - Purpose: Add comment on post
 
 Request body:
@@ -693,7 +665,6 @@ Request body:
 ```
 
 Success response (201):
-
 ```json
 {
 	"message": "Comment added successfully",
@@ -710,22 +681,49 @@ Success response (201):
 }
 ```
 
+### PUT /api/collab/comment/:commentId
+
+- Auth: Public (current route configuration)
+- Purpose: Update comment text by comment ID
+
+Request body:
+
+```json
+{
+	"text": "Updated comment text"
+}
+```
+
 ### GET /api/collab/notifications
 
-- Auth: Bearer token required
-- Purpose: Retrieve notifications for logged-in user and mark unread as read
+- Auth: Public (current route configuration)
+- Purpose: Retrieve notifications for current user
 
 ### PUT /api/collab/post/:id
 
-- Auth: Bearer token required
-- Access: post owner only
+- Auth: Public (current route configuration)
+- Access: post owner only (controller-level check)
 - Purpose: Update post
 
 ### DELETE /api/collab/post/:id
 
-- Auth: Bearer token required
-- Access: post owner only
+- Auth: Public (current route configuration)
+- Access: post owner only (controller-level check)
 - Purpose: Delete post
+
+### POST /api/collab/announcement
+
+- Auth: Public (current route configuration)
+- Access: admin only (controller-level check)
+- Purpose: Broadcast announcement to all users
+
+Request body:
+
+```json
+{
+	"message": "System maintenance at 10 PM"
+}
+```
 
 ## 6. Error Response Patterns
 
@@ -795,9 +793,6 @@ Frontend (Vercel):
 ```env
 REACT_APP_API_BASE_URL=https://partnersync-backend-c9aj.onrender.com
 ```
-
-Important note:
-- Current frontend source uses hardcoded localhost API URLs in several pages. If you want stable production behavior, replace those with an environment-based base URL (for example REACT_APP_API_BASE_URL).
 
 ## 8.3 Build and Start Commands Used
 

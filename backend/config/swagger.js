@@ -642,34 +642,12 @@ const options = {
           }
         }
       },
-      '/api/collab/post': {
-        post: {
-          tags: ['Collaboration'],
-          summary: 'Create collaboration post',
-          security: [{ bearerAuth: [] }],
-          requestBody: {
-            required: true,
-            content: {
-              'application/json': {
-                schema: { $ref: '#/components/schemas/CollabPostInput' }
-              }
-            }
-          },
-          responses: {
-            201: { description: 'Post created' },
-            400: { description: 'Validation error' },
-            401: { description: 'Unauthorized' }
-          }
-        }
-      },
       '/api/collab/feed': {
         get: {
           tags: ['Collaboration'],
           summary: 'Get collaboration feed',
-          security: [{ bearerAuth: [] }],
           responses: {
-            200: { description: 'Feed fetched' },
-            401: { description: 'Unauthorized' }
+            200: { description: 'Feed fetched' }
           }
         }
       },
@@ -677,7 +655,6 @@ const options = {
         post: {
           tags: ['Collaboration'],
           summary: 'Add comment to post',
-          security: [{ bearerAuth: [] }],
           requestBody: {
             required: true,
             content: {
@@ -688,8 +665,40 @@ const options = {
           },
           responses: {
             201: { description: 'Comment added' },
-            401: { description: 'Unauthorized' },
             404: { description: 'Post not found' }
+          }
+        }
+      },
+      '/api/collab/comment/{commentId}': {
+        put: {
+          tags: ['Collaboration'],
+          summary: 'Update a comment by comment ID',
+          parameters: [
+            {
+              in: 'path',
+              name: 'commentId',
+              required: true,
+              schema: { type: 'string' }
+            }
+          ],
+          requestBody: {
+            required: true,
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  required: ['text'],
+                  properties: {
+                    text: { type: 'string', example: 'Updated comment text' }
+                  }
+                }
+              }
+            }
+          },
+          responses: {
+            200: { description: 'Comment updated' },
+            403: { description: 'Forbidden' },
+            404: { description: 'Comment not found' }
           }
         }
       },
@@ -697,10 +706,8 @@ const options = {
         get: {
           tags: ['Collaboration'],
           summary: 'Get notifications for current user',
-          security: [{ bearerAuth: [] }],
           responses: {
-            200: { description: 'Notifications fetched' },
-            401: { description: 'Unauthorized' }
+            200: { description: 'Notifications fetched' }
           }
         }
       },
@@ -708,7 +715,6 @@ const options = {
         put: {
           tags: ['Collaboration'],
           summary: 'Update collaboration post',
-          security: [{ bearerAuth: [] }],
           parameters: [
             {
               in: 'path',
@@ -727,7 +733,6 @@ const options = {
           },
           responses: {
             200: { description: 'Post updated' },
-            401: { description: 'Unauthorized' },
             403: { description: 'Forbidden' },
             404: { description: 'Post not found' }
           }
@@ -735,7 +740,6 @@ const options = {
         delete: {
           tags: ['Collaboration'],
           summary: 'Delete collaboration post',
-          security: [{ bearerAuth: [] }],
           parameters: [
             {
               in: 'path',
@@ -746,9 +750,33 @@ const options = {
           ],
           responses: {
             200: { description: 'Post deleted' },
-            401: { description: 'Unauthorized' },
             403: { description: 'Forbidden' },
             404: { description: 'Post not found' }
+          }
+        }
+      },
+      '/api/collab/announcement': {
+        post: {
+          tags: ['Collaboration'],
+          summary: 'Create a system-wide announcement',
+          requestBody: {
+            required: true,
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  required: ['message'],
+                  properties: {
+                    message: { type: 'string', example: 'System maintenance at 10 PM.' }
+                  }
+                }
+              }
+            }
+          },
+          responses: {
+            201: { description: 'Announcement sent to all users' },
+            400: { description: 'Validation error' },
+            403: { description: 'Forbidden' }
           }
         }
       }
