@@ -31,11 +31,11 @@ const setupApp = () => {
     });
     
     // Setup routes
-    testApp.post('/api/reports/submit', reportController.submitReport);
+    testApp.post('/api/reports', reportController.submitReport);
     testApp.get('/api/reports/project/:id', reportController.getProjectReports);
     testApp.get('/api/reports/stats/summary', reportController.getStatsSummary);
-    testApp.delete('/api/reports/remove/:id', reportController.removeReport);
-    testApp.put('/api/reports/update/:id', reportController.updateReport);
+    testApp.delete('/api/reports/:id', reportController.removeReport);
+    testApp.put('/api/reports/:id', reportController.updateReport);
     
     // Error handling middleware
     testApp.use((err, req, res, next) => {
@@ -103,7 +103,7 @@ describe('Report Controller Unit Tests', () => {
         });
     });
 
-    describe('POST /api/reports/submit - Submit Report', () => {
+    describe('POST /api/reports - Submit Report', () => {
         // TEST 01: Submit financial report with USD conversion
         test('should successfully submit a financial report with USD conversion', async () => {
             // Mock successful exchange rate API response
@@ -123,7 +123,7 @@ describe('Report Controller Unit Tests', () => {
             };
 
             const response = await request(app)
-                .post('/api/reports/submit')
+                .post('/api/reports')
                 .send(reportData)
                 .expect(201);
 
@@ -150,7 +150,7 @@ describe('Report Controller Unit Tests', () => {
             };
 
             const response = await request(app)
-                .post('/api/reports/submit')
+                .post('/api/reports')
                 .send(reportData)
                 .expect(201);
 
@@ -169,7 +169,7 @@ describe('Report Controller Unit Tests', () => {
             };
 
             const response = await request(app)
-                .post('/api/reports/submit')
+                .post('/api/reports')
                 .send(reportData)
                 .expect(201);
 
@@ -186,7 +186,7 @@ describe('Report Controller Unit Tests', () => {
             };
 
             const response = await request(app)
-                .post('/api/reports/submit')
+                .post('/api/reports')
                 .send(reportData)
                 .expect(400);
 
@@ -202,7 +202,7 @@ describe('Report Controller Unit Tests', () => {
             };
 
             const response = await request(app)
-                .post('/api/reports/submit')
+                .post('/api/reports')
                 .send(reportData)
                 .expect(400);
 
@@ -219,7 +219,7 @@ describe('Report Controller Unit Tests', () => {
             };
 
             const response = await request(app)
-                .post('/api/reports/submit')
+                .post('/api/reports')
                 .send(reportData)
                 .expect(400);
 
@@ -237,7 +237,7 @@ describe('Report Controller Unit Tests', () => {
             };
 
             const response = await request(app)
-                .post('/api/reports/submit')
+                .post('/api/reports')
                 .send(reportData)
                 .expect(400);
 
@@ -255,7 +255,7 @@ describe('Report Controller Unit Tests', () => {
             };
 
             const response = await request(app)
-                .post('/api/reports/submit')
+                .post('/api/reports')
                 .send(reportData)
                 .expect(400);
 
@@ -273,7 +273,7 @@ describe('Report Controller Unit Tests', () => {
             };
 
             const response = await request(app)
-                .post('/api/reports/submit')
+                .post('/api/reports')
                 .send(reportData)
                 .expect(404);
 
@@ -294,7 +294,7 @@ describe('Report Controller Unit Tests', () => {
             };
 
             const response = await request(app)
-                .post('/api/reports/submit')
+                .post('/api/reports')
                 .send(reportData)
                 .expect(400);
 
@@ -473,7 +473,7 @@ describe('Report Controller Unit Tests', () => {
         });
     });
 
-    describe('DELETE /api/reports/remove/:id - Remove Report', () => {
+    describe('DELETE /api/reports/:id - Remove Report', () => {
         // TEST 18: Admin delete any report
         test('should allow admin to delete any report', async () => {
             const report = await Report.create({
@@ -490,7 +490,7 @@ describe('Report Controller Unit Tests', () => {
             });
 
             const response = await request(app)
-                .delete(`/api/reports/remove/${report._id}`)
+                .delete(`/api/reports/${report._id}`)
                 .expect(200);
 
             expect(response.body.success).toBe(true);
@@ -511,7 +511,7 @@ describe('Report Controller Unit Tests', () => {
             });
 
             const response = await request(app)
-                .delete(`/api/reports/remove/${report._id}`)
+                .delete(`/api/reports/${report._id}`)
                 .expect(200);
 
             expect(response.body.success).toBe(true);
@@ -522,7 +522,7 @@ describe('Report Controller Unit Tests', () => {
             const fakeReportId = new mongoose.Types.ObjectId();
 
             const response = await request(app)
-                .delete(`/api/reports/remove/${fakeReportId}`)
+                .delete(`/api/reports/${fakeReportId}`)
                 .expect(404);
 
             expect(response.body.success).toBe(false);
@@ -530,7 +530,7 @@ describe('Report Controller Unit Tests', () => {
         });
     });
 
-    describe('PUT /api/reports/update/:id - Update Report', () => {
+    describe('PUT /api/reports/:id - Update Report', () => {
         // TEST 21: Update report description
         test('should successfully update report description', async () => {
             const report = await Report.create({
@@ -545,7 +545,7 @@ describe('Report Controller Unit Tests', () => {
             };
 
             const response = await request(app)
-                .put(`/api/reports/update/${report._id}`)
+                .put(`/api/reports/${report._id}`)
                 .send(updateData)
                 .expect(200);
 
@@ -580,7 +580,7 @@ describe('Report Controller Unit Tests', () => {
             };
 
             const response = await request(app)
-                .put(`/api/reports/update/${report._id}`)
+                .put(`/api/reports/${report._id}`)
                 .send(updateData)
                 .expect(200);
 
@@ -594,7 +594,7 @@ describe('Report Controller Unit Tests', () => {
             const fakeReportId = new mongoose.Types.ObjectId();
 
             const response = await request(app)
-                .put(`/api/reports/update/${fakeReportId}`)
+                .put(`/api/reports/${fakeReportId}`)
                 .send({ description: 'Test' })
                 .expect(404);
 

@@ -1,6 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const {
+    getReports,
+    getReportById,
     submitReport,
     getProjectReports,
     getStatsSummary,
@@ -19,15 +21,15 @@ router.get('/project/:id', getProjectReports);
 // Get aggregated statistics summary (anyone can view)
 router.get('/stats/summary', getStatsSummary);
 
+// RESTful report listing and retrieval
+router.get('/', getReports);
+router.get('/:id', getReportById);
+
 // --- PROTECTED ROUTES ---
 
-// Submit a new report (Admin, Partner, Government only)
-router.post('/submit', protect, authorize('admin', 'partner', 'government'), submitReport);
-
-// Update a report (Admin or Report Owner)
-router.put('/update/:id', protect, updateReport);
-
-// Delete a report (Admin or Report Owner)
-router.delete('/remove/:id', protect, removeReport);
+// RESTful create/update/delete
+router.post('/', protect, authorize('admin', 'partner', 'government'), submitReport);
+router.put('/:id', protect, updateReport);
+router.delete('/:id', protect, removeReport);
 
 module.exports = router;

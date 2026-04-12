@@ -1,8 +1,10 @@
 const express = require('express');
 const dotenv = require('dotenv');
 const cors = require('cors');
+const swaggerUi = require('swagger-ui-express');
 const connectDB = require('./config/db');
 const { errorHandler } = require('./middleware/errorMiddleware');
+const swaggerSpec = require('./config/swagger');
 
 // Load environment variables - Only use .env file if NOT in production
 if (process.env.NODE_ENV !== 'production') {
@@ -17,18 +19,10 @@ const app = express();
 
 // ── Middleware ───────────────────────────────────────────────
 app.use(express.json());
+app.use(cors());
 
-// Modified CORS for Production
-app.use(cors({
-  origin: [
-    "https://partner-sync.vercel.app", 
-    "https://partner-sync-9rrvglou5-manugajayasingheicts-projects.vercel.app",
-    "http://localhost:5173", // Keep for local development (Vite default)
-    "http://localhost:3000"  // Keep for local development (CRA default)
-  ],
-  methods: ["GET", "POST", "PUT", "DELETE"],
-  credentials: true
-}));
+// API documentation
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 // ── Routes ───────────────────────────────────────────────────
 app.use('/api/auth',     require('./routes/authRoutes'));     
@@ -39,7 +33,7 @@ app.use('/api/collab',   require('./routes/collabRoutes'));
 
 // Root Route
 app.get('/', (req, res) => {
-  res.send('PartnerSync API is running...');
+  res.send('PartnerSync API is running... OpenAPI docs: /api-docs');
 });
 
 // 🛑 CRITICAL: Error Handler must be after all routes
