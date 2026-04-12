@@ -1,24 +1,33 @@
-/* ── FONTS ──────────────────────────────────────────────────── */
 @import url('https://fonts.googleapis.com/css2?family=Fraunces:wght@400;600;700&family=DM+Sans:wght@300;400;500;600&display=swap');
 
-/* ── VARIABLES ──────────────────────────────────────────────── */
 :root {
-    --bg: #0d1117;
-    --bg2: #161b22;
-    --bg3: #21262d;
-    --border: rgba(255, 255, 255, 0.08);
-    --text: #e6edf3;
-    --text-muted: #7d8590;
-    --green: #10b981;
-    --green-dim: rgba(16, 185, 129, 0.15);
-    --blue: #3b82f6;
-    --blue-dim: rgba(59, 130, 246, 0.15);
-    --amber: #f59e0b;
+    --bg: #F3F4F6;
+    --bg2: #FFFFFF;
+    --bg3: #F0F1F3;
+    --border: rgba(0, 0, 0, 0.06);
+    --text: #1F2937;
+    --text-muted: #6B7280;
+    --primary: #19486A;
+    --primary-dim: rgba(25, 72, 106, 0.1);
+    --secondary: #3B82F6;
+    --secondary-dim: rgba(59, 130, 246, 0.1);
+    --accent: #22D3EE;
+    --accent-dim: rgba(34, 211, 238, 0.1);
+    --success: #10B981;
+    --success-dim: rgba(16, 185, 129, 0.1);
+    --danger: #EF4444;
     --radius: 14px;
-    --shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+    --shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
+
+    /* Dark mode colors (unused by default, activated via JS) */
+    --ch-dark-bg: transparent;
+    --ch-dark-bg2: transparent;
+    --ch-dark-bg3: transparent;
+    --ch-dark-border: transparent;
+    --ch-dark-text: transparent;
+    --ch-dark-text-muted: transparent;
 }
 
-/* ── RESET ──────────────────────────────────────────────────── */
 *,
 *::before,
 *::after {
@@ -27,7 +36,6 @@
     padding: 0;
 }
 
-/* ── ROOT ───────────────────────────────────────────────────── */
 .ch-root {
     min-height: 100vh;
     background: var(--bg);
@@ -36,7 +44,6 @@
     padding-bottom: 60px;
 }
 
-/* ── HEADER ─────────────────────────────────────────────────── */
 .ch-header {
     display: flex;
     align-items: center;
@@ -60,8 +67,8 @@
     font-size: 28px;
     width: 48px;
     height: 48px;
-    background: var(--green-dim);
-    border: 1px solid var(--green);
+    background: var(--primary-dim);
+    border: 1px solid var(--primary);
     border-radius: 12px;
     display: grid;
     place-items: center;
@@ -87,7 +94,6 @@
     gap: 12px;
 }
 
-/* ── BUTTONS ────────────────────────────────────────────────── */
 .ch-btn {
     display: inline-flex;
     align-items: center;
@@ -104,12 +110,12 @@
 }
 
 .ch-btn--primary {
-    background: var(--green);
+    background: var(--primary);
     color: #fff;
 }
 
 .ch-btn--primary:hover {
-    background: #059669;
+    background: #0F3B5B;
     transform: translateY(-1px);
 }
 
@@ -162,7 +168,6 @@
     color: var(--text);
 }
 
-/* ── NOTIFICATION BADGE ─────────────────────────────────────── */
 .ch-notif-wrap {
     position: relative;
 }
@@ -183,7 +188,6 @@
     border: 2px solid var(--bg2);
 }
 
-/* ── FILTERS ────────────────────────────────────────────────── */
 .ch-filters {
     display: flex;
     align-items: center;
@@ -212,9 +216,9 @@
 }
 
 .ch-filter-btn.active {
-    background: var(--green-dim);
-    border-color: var(--green);
-    color: var(--green);
+    background: var(--primary-dim);
+    border-color: var(--primary);
+    color: var(--primary);
 }
 
 .ch-filter-count {
@@ -223,7 +227,6 @@
     color: var(--text-muted);
 }
 
-/* ── FEED ───────────────────────────────────────────────────── */
 .ch-feed {
     max-width: 720px;
     margin: 28px auto;
@@ -233,7 +236,6 @@
     gap: 16px;
 }
 
-/* ── POST CARD ──────────────────────────────────────────────── */
 .ch-card {
     background: var(--bg2);
     border: 1px solid var(--border);
@@ -321,7 +323,6 @@
     gap: 8px;
 }
 
-/* ── BADGES ─────────────────────────────────────────────────── */
 .ch-badge {
     font-size: 11px;
     font-weight: 600;
@@ -331,18 +332,17 @@
 }
 
 .ch-badge--partner {
-    background: var(--blue-dim);
-    color: var(--blue);
+    background: var(--secondary-dim);
+    color: var(--secondary);
     border: 1px solid rgba(59, 130, 246, 0.3);
 }
 
 .ch-badge--announce {
-    background: var(--green-dim);
-    color: var(--green);
+    background: var(--success-dim);
+    color: var(--success);
     border: 1px solid rgba(16, 185, 129, 0.3);
 }
 
-/* ── MODAL OVERLAY ──────────────────────────────────────────── */
 .ch-overlay {
     position: fixed;
     inset: 0;
@@ -427,7 +427,6 @@
     gap: 10px;
 }
 
-/* ── FORM FIELDS ────────────────────────────────────────────── */
 .ch-field {
     display: flex;
     flex-direction: column;
@@ -454,7 +453,7 @@
 }
 
 .ch-input:focus {
-    border-color: var(--green);
+    border-color: var(--primary);
 }
 
 .ch-input::placeholder {
@@ -471,7 +470,6 @@
     color: #ef4444;
 }
 
-/* ── TOGGLE ─────────────────────────────────────────────────── */
 .ch-toggle {
     display: flex;
     background: var(--bg3);
@@ -496,11 +494,10 @@
 }
 
 .ch-toggle__btn.active {
-    background: var(--green);
+    background: var(--primary);
     color: #fff;
 }
 
-/* ── COMMENTS ───────────────────────────────────────────────── */
 .ch-comments-list {
     max-height: 340px;
     overflow-y: auto;
@@ -555,7 +552,6 @@
     align-items: center;
 }
 
-/* ── NOTIFICATIONS PANEL ────────────────────────────────────── */
 .ch-notif-panel {
     position: absolute;
     top: 48px;
@@ -603,14 +599,14 @@
 }
 
 .ch-notif-item--unread {
-    background: rgba(16, 185, 129, 0.05);
+    background: var(--primary-dim);
 }
 
 .ch-notif-dot {
     width: 8px;
     height: 8px;
     border-radius: 50%;
-    background: var(--green);
+    background: var(--primary);
     margin-top: 5px;
     flex-shrink: 0;
     opacity: 0;
@@ -631,7 +627,6 @@
     color: var(--text-muted);
 }
 
-/* ── SKELETONS ──────────────────────────────────────────────── */
 .ch-loading {
     display: flex;
     flex-direction: column;
@@ -658,7 +653,6 @@
     }
 }
 
-/* ── EMPTY STATES ───────────────────────────────────────────── */
 .ch-empty {
     text-align: center;
     color: var(--text-muted);
@@ -684,7 +678,16 @@
     font-size: 15px;
 }
 
-/* ── RESPONSIVE ─────────────────────────────────────────────── */
+.ch-root--dark {
+    --bg: var(--ch-dark-bg, #0d1117);
+    --bg2: var(--ch-dark-bg2, #161b22);
+    --bg3: var(--ch-dark-bg3, #21262d);
+    --border: var(--ch-dark-border, rgba(255, 255, 255, 0.08));
+    --text: var(--ch-dark-text, #e6edf3);
+    --text-muted: var(--ch-dark-text-muted, #7d8590);
+    --primary-dim: rgba(16, 185, 129, 0.15);
+}
+
 @media (max-width: 600px) {
     .ch-header {
         padding: 14px 16px;
